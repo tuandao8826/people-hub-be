@@ -1,11 +1,11 @@
 ﻿using Application.Common.Definitions.Messages;
+using Application.Common.Exceptions;
 using Application.Common.Interfaces.Persistence;
 using Application.Modules.Users.Bases.Responses.Users;
 using Application.Modules.Users.Entities;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Modules.Users.Queries.Detail;
@@ -19,6 +19,6 @@ public class GetUserDetailHandler(IUnitOfWork unitOfWork, IMapper mapper) : IReq
             .AsNoTracking()
             .ProjectTo<UserDefaultResponse>(mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(cancellationToken)
-            ?? throw new BadHttpRequestException(Message<User>.NotFound(), 400);
+            ?? throw new BadRequestException(Message<User>.NotFound());
     }
 }

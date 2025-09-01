@@ -23,6 +23,8 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
 	{
 		builder.UseDefaultTableNaming().HasBaseEntity();
 
+		builder.Property(x => x.Code).IsRequired();
+
 		builder.HasCitextUnique(x => x.Code);
 	}
 }

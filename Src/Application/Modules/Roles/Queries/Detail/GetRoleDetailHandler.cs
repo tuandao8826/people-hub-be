@@ -1,12 +1,11 @@
 ﻿using Application.Common.Definitions.Messages;
+using Application.Common.Exceptions;
 using Application.Common.Interfaces.Persistence;
-using Application.Modules.Roles.Bases.Responses.Permissions;
 using Application.Modules.Roles.Bases.Responses.Roles;
 using Application.Modules.Roles.Entities;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Modules.Roles.Queries.Detail;
@@ -20,6 +19,6 @@ public class GetRoleDetailHandler(IUnitOfWork unitOfWork, IMapper mapper) : IReq
             .AsNoTracking()
             .ProjectTo<RoleDetailResponse>(mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(cancellationToken)
-            ?? throw new BadHttpRequestException(Message<Role>.NotFound(), 400);
+            ?? throw new BadRequestException(Message<Role>.NotFound());
     }
 }

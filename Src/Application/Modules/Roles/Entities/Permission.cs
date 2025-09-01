@@ -1,15 +1,16 @@
 ﻿using Application.Common.Definitions.AclPermissions;
 using Application.Common.Extensions;
 using AutoMapper;
+using Core.Bases.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Application.Modules.Roles.Entities;
 
-public class Permission(string code, string name)
+public class Permission(string code, string name) : ICode
 {
-	public string Code { get; set; } = code;
+	public string? Code { get; set; } = code;
 
 	public string Name { get; set; } = name!;
 

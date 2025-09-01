@@ -17,8 +17,11 @@ public class MultipleIdentiferValidator<TEntity, TId> : AbstractValidator<Multip
     public MultipleIdentiferValidator(IUnitOfWork unitOfWork, Expression<Func<TEntity, bool>>? filter = null)
     {
         RuleFor(x => x.Ids)
-            .NotEmpty().WithMessage(Message<TEntity>.Required(x => x.Id))
-            .NotDuplicate().WithMessage(Message<TEntity>.Duplicate(x => x.Id))
-            .Must(ids => unitOfWork.HasIds<TEntity, TId>(ids!, filter)).WithMessage(Message<TEntity>.NotFound(x => x.Id));
+            .NotEmpty()
+            .WithMessage(Message<TEntity>.Required(x => x.Id))
+            .NotDuplicate()
+            .WithMessage(Message<TEntity>.Duplicate(x => x.Id))
+            .Must(ids => unitOfWork.HasIds<TEntity, TId>(ids!, filter))
+            .WithMessage(Message<TEntity>.NotFound(x => x.Id));
 	}
 }

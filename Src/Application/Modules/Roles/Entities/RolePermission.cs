@@ -6,7 +6,15 @@ namespace Application.Modules.Roles.Entities;
 
 public class RolePermission
 {
-	public Guid RoleId { get; set; }
+	public RolePermission() { }
+
+    public RolePermission(Guid roleId, string permissionCode)
+    {
+        RoleId = roleId;
+		PermissionCode = permissionCode;
+    }
+
+    public Guid RoleId { get; set; }
 
 	public Role? Role { get; set; }
 

@@ -2,12 +2,12 @@
 using Application.Common.Auths.Jwt;
 using Application.Common.Auths.Services;
 using Application.Common.Definitions.Messages;
+using Application.Common.Exceptions;
 using Application.Common.Extensions;
 using Application.Common.Interfaces.Persistence;
 using Application.Modules.Users.Entities;
 using Core.Common.Enums;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -22,16 +22,17 @@ public class LoginUserHandler(IUnitOfWork unitOfWork, IJwtTokenService jwtTokenS
         User user = await unitOfWork.Repository<User>()
             .Find(x => x.Username == request.Username)
             .AsNoTracking()
-            .FirstOrDefaultAsync(cancellationToken) ?? throw new BadHttpRequestException(Message<User>.Invalid());
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new BadRequestException(Message<User>.Invalid());
 
         if (!PasswordExtension.Verify(request.Password!, user.Password))
         {
-            throw new BadHttpRequestException(Message<User>.Invalid());
+            throw new BadRequestException(Message<User>.Invalid());
         }
 
         if (user.Status == OperationStatus.Locked)
         {
-            throw new BadHttpRequestException(Message<User>.Blocked());
+            throw new BadRequestException(Message<User>.Blocked());
         }
 
         LoginUserResponse authToken = new()
