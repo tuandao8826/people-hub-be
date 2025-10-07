@@ -23,7 +23,7 @@ try
     #region Main dependencies
     builder.AddLoggingSetup();
 	builder.AddConfiguration();
-	builder.Services.AddSwaggerSetup();
+	builder.Services.AddSwaggerSetup(configuration);
 	#endregion
 
 	#region Layers dependencies
@@ -37,17 +37,8 @@ try
 	await app.Services.InitializeSeedDataAsync();
 	#endregion
 
-	if (app.Environment.IsDevelopment())
-	{
-		app.UseSwagger();
-		app.UseSwaggerUI(options =>
-		{
-			options.SwaggerEndpoint("/swagger/Admin/swagger.json", "Admin API");
-			options.SwaggerEndpoint("/swagger/Public/swagger.json", "Public API v1");
-		});
-	}
-
-	app.UseAuthentication();
+	app.OpenSwagger();
+    app.UseAuthentication();
 	app.UseMiddlewares();
 	app.UseAuthorization();
 
