@@ -29,7 +29,21 @@ try
 	#region Layers dependencies
 	builder.Services.AddInfrastructure(configuration);
 	builder.Services.AddApplication(configuration);
-    #endregion
+	#endregion
+
+	builder.Services.AddCors(options =>
+	{
+		options.AddPolicy(
+			"AllowSpecificOrigin",
+			builder =>
+			{
+				builder
+					.WithOrigins("*")
+					.AllowAnyHeader()
+					.AllowAnyMethod();
+			}
+		);
+	});
 
     var app = builder.Build();
 
@@ -42,7 +56,10 @@ try
 	app.UseMiddlewares();
 	app.UseAuthorization();
 
-	app.MapControllers();
+	app.UseCors("AllowSpecificOrigin");
+
+
+    app.MapControllers();
 
 	app.Run();
 }
