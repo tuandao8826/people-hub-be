@@ -29,4 +29,7 @@ public static class ValidationExtension
 
     public static bool HasCodes<TEntity>(this IUnitOfWork unitOfWork, IEnumerable<string> codes, Expression<Func<TEntity, bool>>? filter = null) where TEntity : BaseEntity, ICode
         => unitOfWork.Repository<TEntity>().Count(x => codes.Contains(x.Code)) == codes.Count();
+
+    public static bool Exists<TEntity>(this IUnitOfWork unitOfWork, Expression<Func<TEntity, bool>>? filter = null) where TEntity : BaseEntity
+        => unitOfWork.Repository<TEntity>().Any(filter);
 }
