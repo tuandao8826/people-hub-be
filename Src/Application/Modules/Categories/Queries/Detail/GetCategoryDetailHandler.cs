@@ -8,7 +8,7 @@ using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.Modules.Categories.Queries;
+namespace Application.Modules.Categories.Queries.Detail;
 
 public class GetCategoryDetailHandler(IUnitOfWork unitOfWork, IMapper mapper) : IRequestHandler<GetCategoryDetailQuery, CategoryDefaultResponse>
 {
