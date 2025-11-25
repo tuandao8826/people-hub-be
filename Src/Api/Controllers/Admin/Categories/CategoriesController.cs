@@ -7,7 +7,8 @@ using Application.Modules.Categories.Commands.Create;
 using Application.Modules.Categories.Commands.DeleteMany;
 using Application.Modules.Categories.Commands.Update;
 using Application.Modules.Categories.Entities;
-using Application.Modules.Categories.Queries;
+using Application.Modules.Categories.Queries.Detail;
+using Application.Modules.Categories.Queries.Search;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +20,12 @@ public class CategoriesController(IMediator mediator) : AdminBaseController
     public async Task<ActionResult<SuccessResultResponse<CategoryDefaultResponse>>> GetDetailAsync([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         return ResultResponse(await mediator.Send(new GetCategoryDetailQuery(id), cancellationToken), Message<Category>.Detail());
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<SuccessResultResponse<PaginationResponse<CategoryDefaultResponse>>>> SearchAsync([FromQuery] SearchCategoryQuery request, CancellationToken cancellationToken)
+    {
+        return ResultResponse(await mediator.Send((request), cancellationToken), Message<Category>.Search());
     }
 
     [HttpPost]
