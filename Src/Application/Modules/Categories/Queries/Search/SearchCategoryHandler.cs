@@ -18,6 +18,8 @@ public class SearchCategoryHandler(IUnitOfWork unitOfWork, IMapper mapper) : IRe
             .Find()
             .AsNoTracking()
             .ProjectTo<CategoryDefaultResponse>(mapper.ConfigurationProvider)
+            .ApplySearch(request)
+            .ApplySort(request)
             .ToPageListAsync(request, cancellationToken);
     }
 }

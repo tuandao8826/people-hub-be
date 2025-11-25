@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using Core.Bases;
+using FluentValidation;
 
 namespace Application.Common.Responses;
 
@@ -18,4 +19,14 @@ public class PaginationParams
     public int Page { get; init; } = 1;
 
     public int PageSize { get; set; } = 10;
+
+    public List<string> Sorts { get; set; } = [];
+
+    public string? SearchKeyword { get; set; }
+}
+
+public enum PaginationParamSort
+{
+    ASC,
+    DESC,
 }
