@@ -20,12 +20,26 @@ public class PaginationParams
 
     public int PageSize { get; set; } = 10;
 
-    public List<string> Sorts { get; set; } = [];
+    public List<PaginationParamSort>? Sorts { get; set; }
 
-    public string? SearchKeyword { get; set; }
+    public PaginationParamSearch? Search { get; set; }
 }
 
-public enum PaginationParamSort
+public class PaginationParamSearch
+{
+    public string? Keyword { get; set; }
+
+    public bool IgnoreCase { get; set; } = true;
+}
+
+public class PaginationParamSort
+{
+    public string Field { get; set; } = default!;
+
+    public SortDirection Direction { get; set; } = SortDirection.DESC;
+}
+
+public enum SortDirection
 {
     ASC,
     DESC,

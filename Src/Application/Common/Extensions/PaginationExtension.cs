@@ -3,6 +3,8 @@ using Core.Bases;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Application.Common.Extensions;
 
@@ -24,49 +26,67 @@ public static class PaginationExtension
     /// Chưa làm
     /// - Thêm attribute bỏ qua search
     /// </summary>
-    /// <typeparam name="TData"></typeparam>
+    /// <typeparam name="TSource"></typeparam>
     /// <param name="query"></param>
     /// <param name="params"></param>
     /// <returns></returns>
-    public static IQueryable<TData> ApplySearch<TData>(this IQueryable<TData> query, PaginationParams @params)
+    public static IQueryable<TSource> ApplySearch<TSource>(this IQueryable<TSource> query, PaginationParams @params)
     {
-        if (string.IsNullOrEmpty(@params.SearchKeyword))
+        if (string.IsNullOrEmpty(@params.Search?.Keyword))
         {
             return query;
         }
 
-        List<string> props = typeof(TData)
+        PropertyInfo[] props = typeof(TSource)
             .GetProperties()
             .Where(x => x.PropertyType == typeof(string))
-            .Select(x => x.Name)
-            .ToList();
+            .ToArray();
 
-        if (props.Count == 0)
+        if (props.Length == 0)
         {
             return query;
         }
 
-        string orExpr = string.Join(" || ", props.Select(x => $"(!string.IsNullOrEmpty({x}) && {x}.ToLower().Contains(@0))"));
+        string keywordValue = @params.Search.IgnoreCase ? @params.Search.Keyword.ToLower() : @params.Search.Keyword;
 
-        return query.Where(orExpr, @params.SearchKeyword.ToLower());
+        ParameterExpression param = Expression.Parameter(typeof(TSource), "x");
+        Expression? body = null;
+        Expression keyword = Expression.Constant(keywordValue);
+        MethodInfo toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes)!;
+        MethodInfo containsMethod = typeof(string).GetMethod("Contains", [typeof(string)])!;
+
+        foreach (PropertyInfo prop in props)
+        {
+            MemberExpression member = Expression.Property(param, prop);
+
+            Expression notNull = Expression.NotEqual(member, Expression.Constant(null, typeof(string)));
+            Expression toLowerMember = @params.Search.IgnoreCase ? Expression.Call(member, toLowerMethod) : member;
+            Expression contains = Expression.Call(toLowerMember, containsMethod, keyword);
+
+            Expression condition = Expression.AndAlso(notNull, contains);
+
+            body = body is null ? condition : Expression.OrElse(body, condition);
+        }
+
+        Expression<Func<TSource, bool>> predicate = Expression.Lambda<Func<TSource, bool>>(body ?? Expression.Constant(true), param);
+
+        return query.Where(predicate);
     }
 
     /// <summary>
     /// Chưa làm
-    /// - Check đầu vào
-    /// - Convert về đúng định dạng chữ hoa/thường
     /// </summary>
-    /// <typeparam name="TData"></typeparam>
+    /// <typeparam name="TSource"></typeparam>
     /// <param name="query"></param>
     /// <param name="params"></param>
     /// <returns></returns>
-    public static IQueryable<TData> ApplySort<TData>(this IQueryable<TData> query, PaginationParams @params)
+    public static IQueryable<TSource> ApplySort<TSource>(this IQueryable<TSource> query, PaginationParams @params)
     {
         if (@params.Sorts == null || @params.Sorts.Count == 0)
         {
-            if (typeof(BaseEntity).IsAssignableFrom(typeof(TData)))
+            if (typeof(BaseEntity).IsAssignableFrom(typeof(TSource)))
             {
-                @params.Sorts = [nameof(BaseEntity.CreatedAt) + $" {PaginationParamSort.DESC}"];
+                @params.Sorts = [ new PaginationParamSort { Field = nameof(BaseEntity.CreatedAt), Direction = SortDirection.DESC }];
             }
             else
             {
@@ -74,7 +94,32 @@ public static class PaginationExtension
             }
         }
 
-        string order = string.Join(", ", @params.Sorts);
+        PropertyInfo[] props = typeof(TSource)
+            .GetProperties()
+            .Where(x => @params.Sorts.Any(s => s.Field.ToLower().Equals(x.Name.ToLower())))
+            .ToArray();
+
+        if (props.Length == 0)
+        {
+            return query;
+        }
+
+        List<PaginationParamSort> sorts = [];
+
+        foreach (PropertyInfo prop in props)
+        {
+            PaginationParamSort? sort = @params.Sorts.Where(x => x.Field.Contains(prop.Name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+
+            if (sort is null)
+            {
+                continue;
+            }
+
+            sort.Field = prop.Name;
+            sorts.Add(sort);
+        }
+
+        string order = string.Join(", ", sorts.Select(x => $"{x.Field} {x.Direction}"));
 
         return query.OrderBy(order);
     }
