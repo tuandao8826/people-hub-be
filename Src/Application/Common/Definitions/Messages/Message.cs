@@ -25,6 +25,9 @@ public static partial class Message<T>
     public static string Action(MessageErrorType type, Expression<Func<T, object?>> propExpression)
         => BuildMessage(type.ToString(), propExpression.GetPropertyName());
 
+    public static string Action(string objectName, string type, string propName)
+        => BuildMessage(type, propName, objectName);
+
     private static string BuildMessage(string type, bool status)
         => BuildMessage(type, status ? Success : Fail);
 
@@ -34,9 +37,9 @@ public static partial class Message<T>
     /// Ex: Message.User.Created.Success
     /// Ex: Message.User.Created.Failed
     /// </summary>
-    private static string BuildMessage(string type, string? propName = null)
+    private static string BuildMessage(string type, string? validationStatus = null, string? objectName = null)
     {
-        string objectName = typeof(T).GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? typeof(T).Name;
+        objectName ??= typeof(T).GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? typeof(T).Name;
 
         var message = new StringBuilder()
             .Append(Prefix)
@@ -45,9 +48,9 @@ public static partial class Message<T>
             .Append(Delimiter)
             .Append(type); // Appends the action (e.g., "Required", "Invalid")
 
-        if (propName is not null)
+        if (validationStatus is not null)
         {
-            message.Append(Delimiter).Append(propName); // Appends the property name (e.g., "Name", "Age", "Success", "Failed")
+            message.Append(Delimiter).Append(validationStatus); // Appends the property name (e.g., "Name", "Age", "Success", "Failed")
         }
 
         return message.ToString();

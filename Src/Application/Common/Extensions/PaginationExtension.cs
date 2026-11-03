@@ -1,7 +1,6 @@
 ﻿using Application.Common.Responses;
 using Core.Bases;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -25,6 +24,7 @@ public static class PaginationExtension
     /// <summary>
     /// Chưa làm
     /// - Thêm attribute bỏ qua search
+    /// - Thêm bộ filter: ==, !=, null,...
     /// </summary>
     /// <typeparam name="TSource"></typeparam>
     /// <param name="query"></param>
@@ -108,13 +108,10 @@ public static class PaginationExtension
 
         foreach (PropertyInfo prop in props)
         {
-            PaginationParamSort? sort = @params.Sorts.Where(x => x.Field.Contains(prop.Name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
-
-            if (sort is null)
-            {
-                continue;
-            }
-
+            PaginationParamSort? sort = @params.Sorts
+                .Where(x => x.Field.Contains(prop.Name, StringComparison.CurrentCultureIgnoreCase))
+                .FirstOrDefault()
+                ?? throw new InvalidOperationException("Field doesn't exist");
             sort.Field = prop.Name;
             sorts.Add(sort);
         }
