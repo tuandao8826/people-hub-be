@@ -16,18 +16,18 @@ public class ProductImage : BaseEntity
     public int Order { get; set; } = 1;
 }
 
-public class ProductImageConfigurations : IEntityTypeConfiguration<ProductImage>
-{
-    public void Configure(EntityTypeBuilder<ProductImage> builder)
-    {
-        builder
-            .HasBaseEntity()
-            .UseDefaultTableNaming();
+//public class ProductImageConfigurations : IEntityTypeConfiguration<ProductImage>
+//{
+//    public void Configure(EntityTypeBuilder<ProductImage> builder)
+//    {
+//        builder
+//            .HasBaseEntity()
+//            .UseDefaultTableNaming();
 
-        builder
-            .HasOne(x => x.Product)
-            .WithMany(x => x.Images)
-            .HasForeignKey(x => x.ProductId)
-            .OnDelete(DeleteBehavior.Cascade);
-    }
-}
+//        builder
+//            .HasOne(x => x.Product)
+//            .WithMany(x => x.Images)
+//            .HasForeignKey(x => x.ProductId)
+//            .OnDelete(DeleteBehavior.Cascade);
+//    }
+//}

@@ -51,16 +51,16 @@ public class Category : BaseEntity
     }
 }
 
-public class CategoryConfigurations : IEntityTypeConfiguration<Category>
-{
-    public void Configure(EntityTypeBuilder<Category> builder)
-    {
-        builder.HasBaseEntity().UseDefaultTableNaming();
+//public class CategoryConfigurations : IEntityTypeConfiguration<Category>
+//{
+//    public void Configure(EntityTypeBuilder<Category> builder)
+//    {
+//        builder.HasBaseEntity().UseDefaultTableNaming();
 
-        builder
-            .HasOne(x => x.Parent)
-            .WithMany(x => x.Children)
-            .HasForeignKey(x => x.ParentId)
-            .OnDelete(DeleteBehavior.Cascade);
-    }
-}
+//        builder
+//            .HasOne(x => x.Parent)
+//            .WithMany(x => x.Children)
+//            .HasForeignKey(x => x.ParentId)
+//            .OnDelete(DeleteBehavior.Cascade);
+//    }
+//}

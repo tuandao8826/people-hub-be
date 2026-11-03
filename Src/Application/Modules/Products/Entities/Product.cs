@@ -40,16 +40,16 @@ public class Product : BaseEntity
     public ICollection<ProductImage>? Images { get; set; }
 }
 
-public class ProductConfigurations : IEntityTypeConfiguration<Product>
-{
-    public void Configure(EntityTypeBuilder<Product> builder)
-    {
-        builder.HasBaseEntity().UseDefaultTableNaming();
+//public class ProductConfigurations : IEntityTypeConfiguration<Product>
+//{
+//    public void Configure(EntityTypeBuilder<Product> builder)
+//    {
+//        builder.HasBaseEntity().UseDefaultTableNaming();
 
-        builder
-            .HasOne(x => x.Category)
-            .WithMany(x => x.Products)
-            .HasForeignKey(x => x.CategoryId)
-            .OnDelete(DeleteBehavior.SetNull);
-    }
-}
+//        builder
+//            .HasOne(x => x.Category)
+//            .WithMany(x => x.Products)
+//            .HasForeignKey(x => x.CategoryId)
+//            .OnDelete(DeleteBehavior.SetNull);
+//    }
+//}
