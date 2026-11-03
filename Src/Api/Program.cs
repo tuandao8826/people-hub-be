@@ -38,7 +38,7 @@ try
 			builder =>
 			{
 				builder
-					.WithOrigins("*")
+					.WithOrigins()
 					.AllowAnyHeader()
 					.AllowAnyMethod();
 			}
