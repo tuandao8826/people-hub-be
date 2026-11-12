@@ -42,8 +42,18 @@ public class Course : BaseEntity
 
     public OperationStatus OperationStatus { get; set; } = OperationStatus.Active;
 
+    public CourseStatus Status { get; set; } = CourseStatus.InProgress;
+
     // Navigation Property: Danh sách nhân viên tham gia khóa học này
     public ICollection<CourseParticipant>? CourseParticipants { get; set; }
+}
+
+public enum CourseStatus
+{
+    NotStarted = 1,
+    InProgress = 2,
+    Completed = 3,
+    Canceled = 4
 }
 
 public class CourseConfiguration : IEntityTypeConfiguration<Course>
