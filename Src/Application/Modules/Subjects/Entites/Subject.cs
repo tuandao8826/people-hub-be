@@ -28,7 +28,7 @@ public class Subject : BaseEntity
     /// <summary>
     /// Giá trị chu kỳ đào tạo định kỳ (ví dụ: 1, 2, 3)
     /// </summary>
-    public int SubjectCycleValue { get; set; }
+    public int CycleValue { get; set; }
 
     /// <summary>
     /// Đơn vị thời gian của chu kỳ (Ngày, Tháng, Năm)
@@ -60,7 +60,7 @@ public class SubjectConfiguration : IEntityTypeConfiguration<Subject>
         builder.HasIndex(x => x.SubjectCode)
             .IsUnique();
 
-        builder.Property(x => x.SubjectCycleValue)
+        builder.Property(x => x.CycleValue)
             .IsRequired();
 
         builder.Property(x => x.SubjectCycleUnit)

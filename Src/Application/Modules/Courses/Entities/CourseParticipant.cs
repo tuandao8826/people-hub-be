@@ -1,4 +1,5 @@
 ﻿using Application.Common.Extensions;
+using Application.Modules.Staff.Entities;
 using Core.Bases;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -11,7 +12,7 @@ public class CourseParticipant : BaseEntity
     public Course? Course { get; set; }
 
     public Guid StaffMemberId { get; set; }
-    //public StaffMember? StaffMember { get; set; }
+    public StaffMember? StaffMember { get; set; }
 
     /// <summary>
     /// Trạng thái nhân viên đã hoàn thành khóa học này hay chưa

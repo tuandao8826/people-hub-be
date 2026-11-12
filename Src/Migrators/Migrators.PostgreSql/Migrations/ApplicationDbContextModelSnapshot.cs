@@ -25,6 +25,79 @@ namespace Migrators.PostgreSql.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Application.Modules.Courses.Entities.Course", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CourseCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("OperationStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseCode")
+                        .IsUnique();
+
+                    b.HasIndex("SubjectId");
+
+                    b.ToTable("course", (string)null);
+                });
+
+            modelBuilder.Entity("Application.Modules.Courses.Entities.CourseParticipant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CompletionDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("StaffMemberId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StaffMemberId");
+
+                    b.HasIndex("CourseId", "StaffMemberId")
+                        .IsUnique();
+
+                    b.ToTable("course_participant", (string)null);
+                });
+
             modelBuilder.Entity("Application.Modules.Roles.Entities.Permission", b =>
                 {
                     b.Property<string>("Code")
@@ -141,6 +214,43 @@ namespace Migrators.PostgreSql.Migrations
                     b.ToTable("staff_member", (string)null);
                 });
 
+            modelBuilder.Entity("Application.Modules.Subjects.Entites.Subject", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CycleValue")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("OperationStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SubjectCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SubjectCycleUnit")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectCode")
+                        .IsUnique();
+
+                    b.ToTable("subject", (string)null);
+                });
+
             modelBuilder.Entity("Application.Modules.Users.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -193,6 +303,36 @@ namespace Migrators.PostgreSql.Migrations
                     b.ToTable("user", (string)null);
                 });
 
+            modelBuilder.Entity("Application.Modules.Courses.Entities.Course", b =>
+                {
+                    b.HasOne("Application.Modules.Subjects.Entites.Subject", "Subject")
+                        .WithMany("Courses")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Application.Modules.Courses.Entities.CourseParticipant", b =>
+                {
+                    b.HasOne("Application.Modules.Courses.Entities.Course", "Course")
+                        .WithMany("CourseParticipants")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Application.Modules.Staff.Entities.StaffMember", "StaffMember")
+                        .WithMany("CourseParticipants")
+                        .HasForeignKey("StaffMemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("StaffMember");
+                });
+
             modelBuilder.Entity("Application.Modules.Roles.Entities.RolePermission", b =>
                 {
                     b.HasOne("Application.Modules.Roles.Entities.Permission", "Permission")
@@ -221,6 +361,11 @@ namespace Migrators.PostgreSql.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("Application.Modules.Courses.Entities.Course", b =>
+                {
+                    b.Navigation("CourseParticipants");
+                });
+
             modelBuilder.Entity("Application.Modules.Roles.Entities.Permission", b =>
                 {
                     b.Navigation("RolePermissions");
@@ -229,6 +374,16 @@ namespace Migrators.PostgreSql.Migrations
             modelBuilder.Entity("Application.Modules.Roles.Entities.Role", b =>
                 {
                     b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("Application.Modules.Staff.Entities.StaffMember", b =>
+                {
+                    b.Navigation("CourseParticipants");
+                });
+
+            modelBuilder.Entity("Application.Modules.Subjects.Entites.Subject", b =>
+                {
+                    b.Navigation("Courses");
                 });
 #pragma warning restore 612, 618
         }

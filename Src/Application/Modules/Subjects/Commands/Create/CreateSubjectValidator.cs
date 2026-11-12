@@ -21,7 +21,7 @@ public class CreateSubjectValidator : AbstractValidator<CreateSubjectCommand>
             .NotEmpty().WithMessage("Tên môn học không được để trống.")
             .MaximumLength(255).WithMessage("Tên môn học không được vượt quá 255 ký tự.");
 
-        RuleFor(x => x.SubjectCycleValue)
+        RuleFor(x => x.CycleValue)
             .GreaterThan(0).WithMessage("Giá trị chu kỳ đào tạo phải lớn hơn 0.");
 
         RuleFor(x => x.SubjectCycleUnit)

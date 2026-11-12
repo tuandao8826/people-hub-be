@@ -1,4 +1,5 @@
 using Application.Common.Extensions;
+using Application.Modules.Courses.Entities;
 using Core.Bases;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -21,6 +22,9 @@ public class StaffMember : BaseEntity
     public string? JobTitle { get; set; }
     public StaffStatus Status { get; set; } = StaffStatus.Active;
     public DateTimeOffset? JoinedOn { get; set; }
+
+    // Navigation Property: M?t nhân viên có nhi?u khóa h?c
+    public ICollection<CourseParticipant>? CourseParticipants { get; set; }
 }
 
 public class StaffMemberConfiguration : IEntityTypeConfiguration<StaffMember>
@@ -37,5 +41,11 @@ public class StaffMemberConfiguration : IEntityTypeConfiguration<StaffMember>
         builder.Property(member => member.Phone).HasMaxLength(30);
         builder.Property(member => member.Department).HasMaxLength(100);
         builder.Property(member => member.JobTitle).HasMaxLength(100);
+
+        // Quan h? v?i b?ng trung gian CourseParticipant
+        builder.HasMany(x => x.CourseParticipants)
+            .WithOne(x => x.StaffMember) // ??m b?o bên CourseParticipant có navigation property StaffMember
+            .HasForeignKey(x => x.StaffMemberId) 
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -17,7 +17,7 @@ public class CreateSubjectCommand : IRequest<Guid>
 
     public string? Description { get; set; }
 
-    public int SubjectCycleValue { get; set; }
+    public int CycleValue { get; set; }
 
     public SubjectCycleUnit SubjectCycleUnit { get; set; }
 
