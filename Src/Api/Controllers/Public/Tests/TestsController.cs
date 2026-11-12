@@ -26,4 +26,16 @@ public class TestsController : PublicBaseController
 
         return ResultResponse(response, Message<User>.View());
     }
+
+    [HttpGet("Health")]
+    public IActionResult Health()
+    {
+        return Ok(new
+        {
+            success = true,
+            message = "PeopleHub API is running",
+            timestamp = DateTimeOffset.UtcNow
+        });
+    }
+
 }

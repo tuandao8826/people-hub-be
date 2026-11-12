@@ -23,7 +23,8 @@ try
     #region Main dependencies
     builder.AddLoggingSetup();
 	builder.AddConfiguration();
-	builder.Services.AddSwaggerSetup(configuration);
+    builder.Configuration.AddEnvironmentVariables();
+    builder.Services.AddSwaggerSetup(configuration);
 	#endregion
 
 	#region Layers dependencies
