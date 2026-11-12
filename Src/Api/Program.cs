@@ -1,4 +1,5 @@
 ﻿using Api.Common.ApiVersioning;
+using Api.Common.Auths;
 using Api.Common.Logging;
 using Api.Common.Swagger;
 using Api.Configurations;
@@ -14,6 +15,7 @@ try
 	var configuration = builder.Configuration;
 
 	builder.Services.AddControllers();
+	builder.Services.AddBrowserSession(builder.Environment);
 	builder.Services.AddEndpointsApiExplorer();
 
     #region ApiVersioning
