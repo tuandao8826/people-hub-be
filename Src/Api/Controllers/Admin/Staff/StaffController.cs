@@ -19,8 +19,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Api.Controllers.Admin.Staff;
 
 [Route("api/v{version:apiVersion}/[controller]")]
-[AllowAnonymous]
-//[Authorize]
+[Authorize]
 public class StaffController(IMediator mediator) : AdminBaseController
 {
     [HttpGet]
