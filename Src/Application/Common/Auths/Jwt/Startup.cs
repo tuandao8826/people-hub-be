@@ -1,5 +1,8 @@
 ﻿using Application.Common.Auths.Configurations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Application.Common.Interfaces.Persistence;
+using Application.Modules.Users.Entities;
+using Core.Common.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -30,6 +33,22 @@ internal static class Startup
 							context.Token = token;
 						}
 						return Task.CompletedTask;
+					},
+					OnTokenValidated = async context =>
+					{
+						var identification = context.Principal?.FindFirst(JwtTokenClaim.Identification)?.Value;
+						if (!Guid.TryParse(identification, out var userId))
+						{
+							context.Fail("Invalid account.");
+							return;
+						}
+
+						var unitOfWork = context.HttpContext.RequestServices.GetRequiredService<IUnitOfWork>();
+						var user = await unitOfWork.Repository<User>().GetByIdAsync(userId, context.HttpContext.RequestAborted);
+						if (user?.Status != OperationStatus.Active)
+						{
+							context.Fail("Inactive account.");
+						}
 					}
 				};
 

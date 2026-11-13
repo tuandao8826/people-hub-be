@@ -4,6 +4,8 @@ using Api.Common.Logging;
 using Api.Common.Swagger;
 using Api.Configurations;
 using Api.Middlewares;
+using Application.Modules.SystemAccounts;
+using Microsoft.AspNetCore.Authorization;
 using Application;
 using Application.Common.Helpers;
 using Application.Common.Seeders;
@@ -15,6 +17,10 @@ try
 	var configuration = builder.Configuration;
 
 	builder.Services.AddControllers();
+	builder.Services.AddAuthorization(options => options.AddPolicy(
+		SystemAccountAccess.Policy,
+		policy => policy.RequireAuthenticatedUser().AddRequirements(new ManageSystemAccountsRequirement())));
+	builder.Services.AddScoped<IAuthorizationHandler, SystemAccountAuthorization>();
 	builder.Services.AddBrowserSession(builder.Environment);
 	builder.Services.AddEndpointsApiExplorer();
 
