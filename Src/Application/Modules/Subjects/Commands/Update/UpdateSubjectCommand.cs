@@ -16,7 +16,7 @@ public class UpdateSubjectRequest
 
     public int CycleValue { get; set; }
 
-    public SubjectCycleUnit CycleUnit { get; set; }
+    public SubjectCycleUnit SubjectCycleUnit { get; set; }
 
     public OperationStatus OperationStatus { get; set; }
 }

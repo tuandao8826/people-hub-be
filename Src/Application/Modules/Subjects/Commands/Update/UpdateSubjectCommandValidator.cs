@@ -26,7 +26,7 @@ public class UpdateSubjectRequestValidator : AbstractValidator<UpdateSubjectRequ
         RuleFor(x => x.CycleValue)
             .GreaterThan(0).WithMessage("Giá trị chu kỳ đào tạo phải lớn hơn 0.");
 
-        RuleFor(x => x.CycleUnit)
+        RuleFor(x => x.SubjectCycleUnit)
             .IsInEnum().WithMessage("Đơn vị chu kỳ không hợp lệ.");
     }
 }

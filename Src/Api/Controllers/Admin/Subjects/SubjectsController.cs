@@ -19,14 +19,14 @@ public partial class SubjectsController(IMediator mediator) : AdminBaseControlle
 {
     [HttpPost]
     [Authorize]
-    public async Task<ActionResult<SuccessResultResponse<Guid>>> CreateAsync([FromForm] CreateSubjectCommand request, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<SuccessResultResponse<Guid>>> CreateAsync([FromBody] CreateSubjectCommand request, CancellationToken cancellationToken = default)
     {
         return ResultResponse(await mediator.Send(request, cancellationToken), Message<Subject>.Create());
     }
 
     [HttpPut("{id:guid}")]
     [Authorize]
-    public async Task<ActionResult<SuccessResultResponse<Guid>>> UpdateAsync([FromRoute] Guid id, [FromForm] UpdateSubjectRequest request, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<SuccessResultResponse<Guid>>> UpdateAsync([FromRoute] Guid id, [FromBody] UpdateSubjectRequest request, CancellationToken cancellationToken = default)
     {
         return ResultResponse(await mediator.Send(new UpdateSubjectCommand(id, request), cancellationToken), Message<Subject>.Update());
     }
