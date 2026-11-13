@@ -15,15 +15,22 @@ public class DeleteRangeUserHandler(IUnitOfWork unitOfWork, ICurrentUserService 
 {
     public async Task<MultipleIdentiferResponse> Handle(DeleteRangeUserCommand request, CancellationToken cancellationToken)
     {
-        SystemAccountAccess.EnsureCanDelete(currentUser.Id);
+        var ids = request.Ids!.ToArray();
+        SystemAccountAccess.EnsureCanDelete(currentUser.Id, ids);
 
-        if (request.Ids!.Contains(SystemAccountAccess.RootAdminId))
+        var targets = unitOfWork.Repository<User>().Find(user => ids.Contains(user.Id));
+        if (currentUser.Id != SystemAccountAccess.RootAdminId)
         {
-            throw new BadRequestException("SystemAccount.RootProtected", HttpStatusCode.Forbidden);
+            var administratorRoleId = SystemAccountAccess.AdministratorRoleId;
+            if (await targets.AnyAsync(user => user.RoleId != administratorRoleId, cancellationToken))
+            {
+                throw new BadRequestException("SystemAccount.DeleteRequiresRoot", HttpStatusCode.Forbidden);
+            }
+            targets = targets.Where(user => user.RoleId == administratorRoleId);
         }
 
-        await unitOfWork.Repository<User>().Find(x => request.Ids!.Contains(x.Id)).ExecuteDeleteAsync(cancellationToken);
+        await targets.ExecuteDeleteAsync(cancellationToken);
 
-        return new MultipleIdentiferResponse(request.Ids!);
+        return new MultipleIdentiferResponse(ids);
     }
 }

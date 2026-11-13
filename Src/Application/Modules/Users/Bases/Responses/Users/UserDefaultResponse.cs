@@ -12,7 +12,7 @@ public class UserDefaultResponse : UserBaseResponse
     public bool CanManageSystemAccounts => Status == Core.Common.Enums.OperationStatus.Active
         && (Id == SystemAccountAccess.RootAdminId || Role?.Id == SystemAccountAccess.AdministratorRoleId);
 
-    public bool CanDeleteSystemAccounts => CanManageSystemAccounts && Id == SystemAccountAccess.RootAdminId;
+    public bool CanDeleteSystemAccounts => CanManageSystemAccounts;
 }
 
 public class UserMapping : Profile

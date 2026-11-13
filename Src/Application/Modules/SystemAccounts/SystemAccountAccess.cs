@@ -16,11 +16,16 @@ public static class SystemAccountAccess
         => user?.Status == OperationStatus.Active
             && (user.Id == RootAdminId || user.RoleId == AdministratorRoleId);
 
-    public static void EnsureCanDelete(Guid actorId)
+    public static void EnsureCanDelete(Guid actorId, IEnumerable<Guid> targetIds)
     {
-        if (actorId != RootAdminId)
+        if (targetIds.Contains(RootAdminId))
         {
-            throw new BadRequestException("SystemAccount.DeleteRequiresRoot", HttpStatusCode.Forbidden);
+            throw new BadRequestException("SystemAccount.RootProtected", HttpStatusCode.Forbidden);
+        }
+
+        if (targetIds.Contains(actorId))
+        {
+            throw new BadRequestException("SystemAccount.SelfDeleteForbidden", HttpStatusCode.Forbidden);
         }
     }
 }

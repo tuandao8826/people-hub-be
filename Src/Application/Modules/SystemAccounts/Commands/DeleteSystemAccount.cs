@@ -1,6 +1,4 @@
-using System.Net;
 using Application.Common.Auths.Services;
-using Application.Common.Exceptions;
 using Application.Common.Interfaces.Persistence;
 using Application.Modules.Users.Entities;
 using MediatR;
@@ -15,10 +13,7 @@ public class DeleteSystemAccountHandler(IUnitOfWork unitOfWork, ICurrentUserServ
 {
     public async Task<bool> Handle(DeleteSystemAccountCommand request, CancellationToken cancellationToken)
     {
-        SystemAccountAccess.EnsureCanDelete(currentUser.Id);
-
-        if (request.Id == SystemAccountAccess.RootAdminId)
-            throw new BadRequestException("SystemAccount.RootProtected", HttpStatusCode.Forbidden);
+        SystemAccountAccess.EnsureCanDelete(currentUser.Id, [request.Id]);
 
         return await unitOfWork.Repository<User>()
             .Find(user => user.Id == request.Id && user.RoleId == SystemAccountAccess.AdministratorRoleId)
