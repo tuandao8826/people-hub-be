@@ -21,6 +21,18 @@ internal static class Startup
 			})
 			.AddJwtBearer(JwtScheme.Admin, options =>
 			{
+				options.Events = new JwtBearerEvents
+				{
+					OnMessageReceived = context =>
+					{
+						if (AdminSessionCookie.TryRead(context.Request, out var token))
+						{
+							context.Token = token;
+						}
+						return Task.CompletedTask;
+					}
+				};
+
 				options.TokenValidationParameters = new TokenValidationParameters
 				{
 					ValidateIssuer = false,

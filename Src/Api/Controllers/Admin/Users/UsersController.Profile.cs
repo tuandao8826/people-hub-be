@@ -5,6 +5,7 @@ using Application.Modules.Users.Entities;
 using Application.Modules.Users.Queries.Profile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Api.Controllers.Admin.Users;
 
@@ -14,6 +15,13 @@ public partial class UsersController
 	[Authorize]
 	public async Task<ActionResult<SuccessResultResponse<UserDefaultResponse>>> ProfileAsync(CancellationToken cancellationToken = default)
 	{
-		return ResultResponse(await mediator.Send(new GetUserProfileQuery(), cancellationToken), Message<User>.Login());
+		var profile = await mediator.Send(new GetUserProfileQuery(), cancellationToken);
+		var expiration = User.FindFirst(JwtRegisteredClaimNames.Exp)?.Value;
+		if (expiration is not null)
+		{
+			Response.Headers["X-Session-Expires-At"] = expiration;
+		}
+		Response.Headers.CacheControl = "no-store";
+		return ResultResponse(profile, Message<User>.Login());
 	}
 }
