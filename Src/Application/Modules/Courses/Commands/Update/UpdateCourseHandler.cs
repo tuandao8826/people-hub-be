@@ -28,7 +28,37 @@ public class UpdateCourseHandler(IUnitOfWork unitOfWork, IMapper mapper) : IRequ
         }
 
         mapper.Map(request.Data, course);
+        course.Status = CourseStatusCalculator.Calculate(course.StartDate, course.EndDate, DateTimeOffset.UtcNow);
         await unitOfWork.Repository<Course>().UpdateAsync(course, cancellationToken);
+
+        if (request.Data.ReplaceStaffMemberList)
+        {
+            var requestedStaffIds = (request.Data.StaffMemberIds ?? []).Distinct().ToHashSet();
+            var participantRepository = unitOfWork.Repository<CourseParticipant>();
+            var currentParticipants = await participantRepository
+                .Find(participant => participant.CourseId == request.CourseId)
+                .ToListAsync(cancellationToken);
+            var participantsToRemove = currentParticipants
+                .Where(participant => !requestedStaffIds.Contains(participant.StaffMemberId))
+                .ToList();
+            var currentStaffIds = currentParticipants
+                .Select(participant => participant.StaffMemberId)
+                .ToHashSet();
+            var participantsToAdd = requestedStaffIds
+                .Where(staffId => !currentStaffIds.Contains(staffId))
+                .Select(staffId => new CourseParticipant
+                {
+                    CourseId = request.CourseId,
+                    StaffMemberId = staffId,
+                    IsCompleted = false
+                })
+                .ToList();
+
+            if (participantsToRemove.Count > 0)
+                await participantRepository.DeleteRangeAsync(participantsToRemove, cancellationToken);
+            if (participantsToAdd.Count > 0)
+                await participantRepository.AddRangeAsync(participantsToAdd, cancellationToken);
+        }
 
         return request.CourseId;
     }

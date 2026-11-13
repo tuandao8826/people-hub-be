@@ -56,6 +56,21 @@ public enum CourseStatus
     Canceled = 4
 }
 
+public static class CourseStatusCalculator
+{
+    public static CourseStatus Calculate(DateTimeOffset startDate, DateTimeOffset endDate, DateTimeOffset now)
+    {
+        // Date-only inputs from the UI have historically been stored at midnight;
+        // treat the selected end date as inclusive for those records.
+        if (endDate.TimeOfDay == TimeSpan.Zero)
+            endDate = endDate.AddDays(1).AddTicks(-1);
+
+        if (now < startDate) return CourseStatus.NotStarted;
+        if (now > endDate) return CourseStatus.Completed;
+        return CourseStatus.InProgress;
+    }
+}
+
 public class CourseConfiguration : IEntityTypeConfiguration<Course>
 {
     public void Configure(EntityTypeBuilder<Course> builder)

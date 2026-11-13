@@ -26,9 +26,18 @@ public class StaffController(IMediator mediator) : AdminBaseController
     public async Task<ActionResult<SuccessResultResponse<PaginationResponse<StaffResponse>>>> ListAsync(
         [FromQuery, Range(1, int.MaxValue / 100)] int page = 1,
         [FromQuery, Range(1, 100)] int pageSize = 20,
+        [FromQuery(Name = "Search.Keyword")] string? keyword = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await mediator.Send(new SearchStaffQuery { Page = page, PageSize = pageSize }, cancellationToken);
+        var request = new SearchStaffQuery
+        {
+            Page = page,
+            PageSize = pageSize,
+            Search = string.IsNullOrWhiteSpace(keyword)
+                ? null
+                : new PaginationParamSearch { Keyword = keyword }
+        };
+        var result = await mediator.Send(request, cancellationToken);
         return ResultResponse(result, Message<StaffMember>.Search());
     }
 

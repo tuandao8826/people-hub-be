@@ -1,5 +1,6 @@
 ﻿using Application.Common.Interfaces.Persistence;
 using Application.Modules.Subjects.Entites;
+using Application.Modules.Staff.Entities;
 using FluentValidation;
 
 namespace Application.Modules.Courses.Commands.Update;
@@ -31,7 +32,7 @@ public class UpdateCourseRequestValidator : AbstractValidator<UpdateCourseReques
 
         RuleFor(x => x.SubjectId)
             .NotEmpty().WithMessage("Phải chọn môn học cho khóa học.")
-            .MustAsync(SubjectExists).WithMessage("Môn học được chọn không tồn tại.");
+            .Must(SubjectExists).WithMessage("Môn học được chọn không tồn tại.");
 
         RuleFor(x => x.StartDate)
             .NotEmpty().WithMessage("Ngày bắt đầu không được để trống.");
@@ -39,11 +40,25 @@ public class UpdateCourseRequestValidator : AbstractValidator<UpdateCourseReques
         RuleFor(x => x.EndDate)
             .NotEmpty().WithMessage("Ngày kết thúc không được để trống.")
             .GreaterThanOrEqualTo(x => x.StartDate).WithMessage("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.");
+
+        RuleFor(x => x.StaffMemberIds)
+            .Must(ids => ids is null || ids.Distinct().Count() == ids.Count)
+            .WithMessage("Danh sách nhân viên tham gia không được có ID trùng.")
+            .Must(StaffMembersExist)
+            .WithMessage("Một hoặc nhiều nhân viên tham gia không tồn tại.");
     }
 
-    private async Task<bool> SubjectExists(Guid subjectId, CancellationToken cancellationToken)
+    private bool SubjectExists(Guid subjectId)
     {
-        return await _unitOfWork.Repository<Subject>()
-            .AnyAsync(x => x.Id == subjectId, cancellationToken);
+        return _unitOfWork.Repository<Subject>()
+            .Any(x => x.Id == subjectId);
+    }
+
+    private bool StaffMembersExist(ICollection<Guid>? staffMemberIds)
+    {
+        if (staffMemberIds is null || staffMemberIds.Count == 0) return true;
+        return _unitOfWork.Repository<StaffMember>()
+            .Find(staff => staffMemberIds.Contains(staff.Id))
+            .Count() == staffMemberIds.Count;
     }
 }

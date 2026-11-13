@@ -69,4 +69,5 @@ try
 catch (Exception ex)
 {
 	ConsoleHelper.WriteLine("[Error]", $"Detail: {ex}");
+	Console.Error.WriteLine($"[{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss zzz}] [FATAL] {ex}");
 }

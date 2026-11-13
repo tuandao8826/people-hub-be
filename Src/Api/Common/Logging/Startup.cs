@@ -5,10 +5,8 @@ public static class Startup
 	public static WebApplicationBuilder AddLoggingSetup(this WebApplicationBuilder builder)
 	{
 		builder.Logging.ClearProviders();
-		builder.Logging.AddConsole();
-		builder.Logging.AddDebug();
+		builder.Logging.SetMinimumLevel(LogLevel.Information);
 
-		// Add console logger with custom formatter
 		builder.Logging.AddSimpleConsole(options =>
 		{
 			options.SingleLine = false;

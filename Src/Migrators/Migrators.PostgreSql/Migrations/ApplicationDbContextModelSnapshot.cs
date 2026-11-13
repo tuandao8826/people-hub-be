@@ -254,6 +254,34 @@ namespace Migrators.PostgreSql.Migrations
                     b.ToTable("subject", (string)null);
                 });
 
+            modelBuilder.Entity("Application.Modules.Training.Entities.TrainingRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StaffMemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("TrainingDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("StaffMemberId", "SubjectId")
+                        .IsUnique();
+
+                    b.ToTable("training_record", (string)null);
+                });
+
             modelBuilder.Entity("Application.Modules.Users.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -353,6 +381,25 @@ namespace Migrators.PostgreSql.Migrations
                     b.Navigation("Permission");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Application.Modules.Training.Entities.TrainingRecord", b =>
+                {
+                    b.HasOne("Application.Modules.Staff.Entities.StaffMember", "StaffMember")
+                        .WithMany()
+                        .HasForeignKey("StaffMemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Application.Modules.Subjects.Entites.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("StaffMember");
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("Application.Modules.Users.Entities.User", b =>

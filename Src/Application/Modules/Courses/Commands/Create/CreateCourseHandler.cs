@@ -10,6 +10,7 @@ public class CreateCourseHandler(IUnitOfWork unitOfWork, IMapper mapper) : IRequ
     public async Task<Guid> Handle(CreateCourseCommand request, CancellationToken cancellationToken)
     {
         var course = mapper.Map<Course>(request);
+        course.Status = CourseStatusCalculator.Calculate(course.StartDate, course.EndDate, DateTimeOffset.UtcNow);
         await unitOfWork.Repository<Course>().AddAsync(course, cancellationToken);
 
         // Thêm danh sách nhân viên tham gia nếu có truyền lên

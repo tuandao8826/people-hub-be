@@ -14,11 +14,14 @@ public class GetCourseDetailHandler(IUnitOfWork unitOfWork, IMapper mapper) : IR
 {
     public async Task<CourseDefaultResponse> Handle(GetCourseDetailQuery request, CancellationToken cancellationToken)
     {
-        return await unitOfWork.Repository<Course>()
+        var course = await unitOfWork.Repository<Course>()
             .Find(x => x.Id == request.CourseId)
             .AsNoTracking()
             .ProjectTo<CourseDefaultResponse>(mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new BadRequestException(Message<Course>.NotFound());
+
+        course.Status = CourseStatusCalculator.Calculate(course.StartDate, course.EndDate, DateTimeOffset.UtcNow);
+        return course;
     }
 }

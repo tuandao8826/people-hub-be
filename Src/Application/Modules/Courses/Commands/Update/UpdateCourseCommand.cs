@@ -14,5 +14,6 @@ public class UpdateCourseRequest
     public DateTimeOffset StartDate { get; set; }
     public DateTimeOffset EndDate { get; set; }
     public Guid SubjectId { get; set; }
-    public CourseStatus Status { get; set; }
+    public ICollection<Guid>? StaffMemberIds { get; set; }
+    public bool ReplaceStaffMemberList { get; set; }
 }

@@ -14,12 +14,30 @@ public class SearchCourseHandler(IUnitOfWork unitOfWork, IMapper mapper) : IRequ
 {
     public async Task<PaginationResponse<CourseDefaultResponse>> Handle(SearchCourseQuery request, CancellationToken cancellationToken)
     {
-        return await unitOfWork.Repository<Course>()
-            .Find()
+        var query = unitOfWork.Repository<Course>().Find();
+        var now = DateTimeOffset.UtcNow;
+        if (request.Status.HasValue)
+        {
+            query = request.Status.Value switch
+            {
+                CourseStatus.NotStarted => query.Where(course => course.StartDate > now),
+                CourseStatus.InProgress => query.Where(course => course.StartDate <= now && course.EndDate.AddDays(1) > now),
+                CourseStatus.Completed => query.Where(course => course.EndDate.AddDays(1) <= now),
+                CourseStatus.Canceled => query.Where(course => course.Status == CourseStatus.Canceled),
+                _ => query
+            };
+        }
+
+        var result = await query
             .AsNoTracking()
             .ProjectTo<CourseDefaultResponse>(mapper.ConfigurationProvider)
             .ApplySearch(request)
             .ApplySort(request)
             .ToPageListAsync(request, cancellationToken);
+
+        foreach (var course in result.PageItems)
+            course.Status = CourseStatusCalculator.Calculate(course.StartDate, course.EndDate, now);
+
+        return result;
     }
 }

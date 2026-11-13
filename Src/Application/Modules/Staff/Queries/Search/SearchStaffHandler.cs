@@ -17,6 +17,7 @@ public class SearchStaffHandler(IUnitOfWork unitOfWork, IMapper mapper)
         => unitOfWork.Repository<StaffMember>()
             .Find()
             .AsNoTracking()
+            .ApplySearch(request)
             .OrderBy(member => member.Code)
             .ProjectTo<StaffResponse>(mapper.ConfigurationProvider)
             .ToPageListAsync(request, cancellationToken);
