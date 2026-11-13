@@ -20,6 +20,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
             switch (ex)
             {
                 case BadRequestException brException:
+                    if (brException.StatusCode == HttpStatusCode.Forbidden)
+                    {
+                        context.Response.StatusCode = (int)brException.StatusCode;
+                    }
                     ErrorResultResponse<dynamic?> brResponse = new((int)brException.StatusCode, null, brException.Message, brException.Errors);
                     await context.Response.WriteAsync(JsonSerializer.Serialize(brResponse));
                     break;

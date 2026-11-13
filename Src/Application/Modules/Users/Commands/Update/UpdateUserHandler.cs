@@ -4,6 +4,8 @@ using Application.Common.Extensions;
 using Application.Common.Interfaces.Persistence;
 using Application.Modules.Users.Bases.Responses.Users;
 using Application.Modules.Users.Entities;
+using Application.Modules.SystemAccounts;
+using System.Net;
 using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +16,11 @@ public class UpdateUserHandler(IUnitOfWork unitOfWork, IMapper mapper) : IReques
 {
     public async Task<UserDefaultResponse> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
+        if (request.UserId == SystemAccountAccess.RootAdminId)
+        {
+            throw new BadRequestException("SystemAccount.RootProtected", HttpStatusCode.Forbidden);
+        }
+
         User user = await unitOfWork.Repository<User>()
             .Find(x => x.Id == request.UserId)
             .FirstOrDefaultAsync(cancellationToken)

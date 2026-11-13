@@ -8,6 +8,7 @@ using Application.Modules.Users.Commands.Delete;
 using Application.Modules.Users.Commands.Update;
 using Application.Modules.Users.Entities;
 using Application.Modules.Users.Queries.Detail;
+using Application.Modules.SystemAccounts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,21 +18,21 @@ namespace Api.Controllers.Admin.Users;
 public partial class UsersController(IMediator mediator) : AdminBaseController
 {
     [HttpPost()]
-    [Authorize]
+    [Authorize(Policy = SystemAccountAccess.Policy)]
     public async Task<ActionResult<SuccessResultResponse<UserDefaultResponse>>> CreateAsync([FromForm] CreateUserCommand request, CancellationToken cancellationToken = default)
     {
         return ResultResponse(await mediator.Send(request, cancellationToken), Message<User>.Create());
     }
 
     [HttpPut("{id:guid}")]
-	[Authorize]
+	[Authorize(Policy = SystemAccountAccess.Policy)]
 	public async Task<ActionResult<SuccessResultResponse<UserDefaultResponse>>> UpdateAsync([FromRoute] Guid id, [FromForm] UpdateUserRequest request, CancellationToken cancellationToken = default)
     {
         return ResultResponse(await mediator.Send(new UpdateUserCommand(id, request), cancellationToken), Message<User>.Update());
     }
 
     [HttpDelete]
-	[Authorize]
+	[Authorize(Policy = SystemAccountAccess.Policy)]
 	public async Task<ActionResult<SuccessResultResponse<MultipleIdentiferResponse>>> DeleteRangeAsync([FromBody] DeleteRangeUserCommand request, CancellationToken cancellationToken = default)
     {
         return ResultResponse(await mediator.Send(request, cancellationToken), Message<User>.Delete());
