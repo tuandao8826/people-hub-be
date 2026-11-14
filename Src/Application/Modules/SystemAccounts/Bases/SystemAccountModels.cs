@@ -10,10 +10,10 @@ public class UpdateSystemAccountRequest
     [Required, MaxLength(50)]
     public string Name { get; set; } = null!;
 
-    [EmailAddress, MaxLength(100)]
-    public string? Email { get; set; }
+    [Required, EmailAddress, MaxLength(100)]
+    public string Email { get; set; } = null!;
 
-    [StringLength(50, MinimumLength = 6)]
+    [StringLength(50, MinimumLength = 8)]
     public string? Password { get; set; }
 
     [EnumDataType(typeof(OperationStatus))]
@@ -22,6 +22,6 @@ public class UpdateSystemAccountRequest
 
 public class CreateSystemAccountRequest : UpdateSystemAccountRequest
 {
-    [Required, StringLength(50, MinimumLength = 6)]
+    [Required, StringLength(50, MinimumLength = 6), RegularExpression(@"^[A-Za-z0-9._-]+$")]
     public string Username { get; set; } = null!;
 }

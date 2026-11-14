@@ -234,14 +234,14 @@ namespace Migrators.PostgreSql.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("citext");
 
                     b.Property<int>("OperationStatus")
                         .HasColumnType("integer");
 
                     b.Property<string>("SubjectCode")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("citext");
 
                     b.Property<int>("SubjectCycleUnit")
                         .HasColumnType("integer");
@@ -249,6 +249,9 @@ namespace Migrators.PostgreSql.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("SubjectCode")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("subject", (string)null);

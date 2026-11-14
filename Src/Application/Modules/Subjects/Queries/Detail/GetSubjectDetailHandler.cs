@@ -7,6 +7,7 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace Application.Modules.Subjects.Queries.Detail;
 
@@ -19,6 +20,6 @@ public class GetSubjectDetailHandler(IUnitOfWork unitOfWork, IMapper mapper) : I
             .AsNoTracking()
             .ProjectTo<SubjectDefaultResponse>(mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(cancellationToken)
-            ?? throw new BadRequestException(Message<Subject>.NotFound());
+            ?? throw new BadRequestException(Message<Subject>.NotFound(), HttpStatusCode.NotFound);
     }
 }

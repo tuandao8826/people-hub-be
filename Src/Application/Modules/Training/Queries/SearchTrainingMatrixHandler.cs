@@ -14,7 +14,9 @@ public class SearchTrainingMatrixHandler(IUnitOfWork unitOfWork)
     public async Task<PaginationResponse<TrainingEmployeeRowResponse>> Handle(
         SearchTrainingMatrixQuery request, CancellationToken cancellationToken)
     {
-        var staffQuery = unitOfWork.Repository<StaffMember>().Find().AsNoTracking();
+        var staffQuery = unitOfWork.Repository<StaffMember>().Find()
+            .Where(member => member.Status == StaffStatus.Active)
+            .AsNoTracking();
         var keyword = request.Search?.Keyword?.Trim();
         if (!string.IsNullOrWhiteSpace(keyword))
             staffQuery = staffQuery.Where(x => EF.Functions.ILike(x.Code, $"%{keyword}%") ||

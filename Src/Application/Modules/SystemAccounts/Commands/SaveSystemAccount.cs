@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using Application.Common.Exceptions;
 using Application.Common.Extensions;
 using Application.Common.Interfaces.Persistence;
@@ -34,17 +35,34 @@ public class SaveSystemAccountHandler(IUnitOfWork unitOfWork)
             var username = ((CreateSystemAccountRequest)request.Data).Username.Trim();
             if (username.Length < 6 || string.IsNullOrEmpty(request.Data.Password))
                 throw new BadRequestException("SystemAccount.CredentialsRequired");
+            if (!Regex.IsMatch(username, @"^[A-Za-z0-9._-]{6,50}$"))
+                throw new BadRequestException("SystemAccount.InvalidUsername");
 
             account = new User { Username = username, RoleId = SystemAccountAccess.AdministratorRoleId };
         }
 
+        var email = request.Data.Email?.Trim();
+        if (string.IsNullOrWhiteSpace(email))
+            throw new BadRequestException("SystemAccount.EmailRequired");
+        var normalizedEmail = email.ToLowerInvariant();
+        var duplicateEmailQuery = accounts.Find(user => user.Email != null && user.Email.ToLower() == normalizedEmail);
+        if (request.Id is Guid currentId)
+            duplicateEmailQuery = duplicateEmailQuery.Where(user => user.Id != currentId);
+        var duplicateEmail = await duplicateEmailQuery.AnyAsync(cancellationToken);
+        if (duplicateEmail)
+            throw new BadRequestException("SystemAccount.EmailExists", HttpStatusCode.Conflict);
+
         account.Name = request.Data.Name.Trim();
-        account.Email = string.IsNullOrWhiteSpace(request.Data.Email) ? null : request.Data.Email.Trim();
+        account.Email = email;
         account.Status = request.Data.Status;
         if (request.Data.Password is { } password)
         {
             if (Encoding.UTF8.GetByteCount(password) > 72 || string.IsNullOrWhiteSpace(password))
                 throw new BadRequestException("SystemAccount.InvalidPassword");
+            if (password.Length is < 8 or > 50 ||
+                !password.Any(char.IsUpper) || !password.Any(char.IsLower) ||
+                !password.Any(char.IsDigit) || !password.Any(character => !char.IsLetterOrDigit(character)))
+                throw new BadRequestException("SystemAccount.WeakPassword");
             account.Password = PasswordExtension.Hash(password);
         }
 

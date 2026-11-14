@@ -54,11 +54,8 @@ public class SubjectConfiguration : IEntityTypeConfiguration<Subject>
     {
         builder.HasBaseEntity().UseDefaultTableNaming();
 
-        builder.Property(x => x.SubjectCode)
-            .IsRequired();
-
-        builder.HasIndex(x => x.SubjectCode)
-            .IsUnique();
+        builder.HasCitextUnique(x => x.SubjectCode);
+        builder.HasCitextUnique(x => x.Name);
 
         builder.Property(x => x.CycleValue)
             .IsRequired();

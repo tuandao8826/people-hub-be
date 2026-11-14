@@ -1,9 +1,11 @@
-﻿using Application.Common.Exceptions;
+using Application.Common.Exceptions;
 using Application.Common.Interfaces.Persistence;
+using Application.Modules.Subjects.Commands;
 using Application.Modules.Subjects.Entites;
 using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace Application.Modules.Subjects.Commands.Update;
 
@@ -11,29 +13,46 @@ public class UpdateSubjectHandler(IUnitOfWork unitOfWork, IMapper mapper) : IReq
 {
     public async Task<Guid> Handle(UpdateSubjectCommand request, CancellationToken cancellationToken)
     {
-        // 1. Tìm môn học theo ID, nếu không tồn tại thì báo lỗi (tùy thuộc vào class BadRequestException hoặc NotFoundException trong project của bạn)
-        var subject = await unitOfWork.Repository<Subject>()
-            .Find(x => x.Id == request.SubjectId)
+        var repository = unitOfWork.Repository<Subject>();
+        var subject = await repository.Find(item => item.Id == request.SubjectId)
             .FirstOrDefaultAsync(cancellationToken)
-            ?? throw new BadRequestException($"Không tìm thấy môn học với ID: {request.SubjectId}");
+            ?? throw new BadRequestException($"Không tìm thấy môn học với ID: {request.SubjectId}", HttpStatusCode.NotFound);
 
-        // 2. Kiểm tra xem SubjectCode mới có bị trùng với môn học khác hay không (nếu có thay đổi SubjectCode)
-        if (subject.SubjectCode != request.Data.SubjectCode)
+        request.Data.SubjectCode = request.Data.SubjectCode.Trim();
+        var normalizedCode = request.Data.SubjectCode.ToLower();
+        if (!string.Equals(subject.SubjectCode.Trim(), request.Data.SubjectCode, StringComparison.OrdinalIgnoreCase))
         {
-            var codeExists = await unitOfWork.Repository<Subject>()
-                .AnyAsync(x => x.SubjectCode == request.Data.SubjectCode && x.Id != request.SubjectId, cancellationToken);
-
+            var codeExists = await repository.AnyAsync(
+                item => item.Id != request.SubjectId && item.SubjectCode.Trim().ToLower() == normalizedCode,
+                cancellationToken);
             if (codeExists)
-            {
-                throw new BadRequestException($"Mã môn học '{request.Data.SubjectCode}' đã tồn tại trong hệ thống.");
-            }
+                throw SubjectConstraintErrors.DuplicateCode(request.Data.SubjectCode);
         }
 
-        // 3. Map dữ liệu mới vào entity hiện tại
-        mapper.Map(request.Data, subject);
+        request.Data.Name = request.Data.Name.Trim();
+        var normalizedName = request.Data.Name.ToLower();
+        if (!string.Equals(subject.Name.Trim(), request.Data.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            var nameExists = await repository.AnyAsync(
+                item => item.Id != request.SubjectId && item.Name.Trim().ToLower() == normalizedName,
+                cancellationToken);
+            if (nameExists)
+                throw SubjectConstraintErrors.DuplicateName(request.Data.Name);
+        }
 
-        // 4. Cập nhật vào Database qua UnitOfWork
-        await unitOfWork.Repository<Subject>().UpdateAsync(subject, cancellationToken);
+        mapper.Map(request.Data, subject);
+        try
+        {
+            await repository.UpdateAsync(subject, cancellationToken);
+        }
+        catch (DbUpdateException exception) when (SubjectConstraintErrors.IsDuplicateCode(exception))
+        {
+            throw SubjectConstraintErrors.DuplicateCode(request.Data.SubjectCode, exception);
+        }
+        catch (DbUpdateException exception) when (SubjectConstraintErrors.IsDuplicateName(exception))
+        {
+            throw SubjectConstraintErrors.DuplicateName(request.Data.Name, exception);
+        }
 
         return request.SubjectId;
     }

@@ -22,7 +22,9 @@ public partial class SubjectsController(IMediator mediator, TrainingNotification
     [Authorize]
     public async Task<ActionResult<SuccessResultResponse<Guid>>> CreateAsync([FromBody] CreateSubjectCommand request, CancellationToken cancellationToken = default)
     {
-        return ResultResponse(await mediator.Send(request, cancellationToken), Message<Subject>.Create());
+        var result = await mediator.Send(request, cancellationToken);
+        notificationSnapshot.Invalidate();
+        return ResultResponse(result, Message<Subject>.Create());
     }
 
     [HttpPut("{id:guid}")]

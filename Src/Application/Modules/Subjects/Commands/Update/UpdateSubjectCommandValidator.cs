@@ -28,5 +28,8 @@ public class UpdateSubjectRequestValidator : AbstractValidator<UpdateSubjectRequ
 
         RuleFor(x => x.SubjectCycleUnit)
             .IsInEnum().WithMessage("Đơn vị chu kỳ không hợp lệ.");
+
+        RuleFor(x => x.OperationStatus)
+            .IsInEnum().WithMessage("Trạng thái môn học không hợp lệ.");
     }
 }

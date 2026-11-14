@@ -1,8 +1,11 @@
-﻿using Application.Common.Interfaces.Persistence;
+using Application.Common.Interfaces.Persistence;
 using Application.Common.Responses;
+using Application.Modules.Courses.Entities;
+using Application.Modules.Subjects.Commands;
 using Application.Modules.Subjects.Entites;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Application.Modules.Subjects.Commands.Delete;
 
@@ -10,11 +13,23 @@ public class DeleteSubjectHandler(IUnitOfWork unitOfWork) : IRequestHandler<Dele
 {
     public async Task<MultipleIdentiferResponse> Handle(DeleteSubjectCommand request, CancellationToken cancellationToken)
     {
-        // Thực hiện xóa trực tiếp các bản ghi có ID nằm trong danh sách request.Ids
-        await unitOfWork.Repository<Subject>()
-            .Find(x => request.Ids!.Contains(x.Id))
-            .ExecuteDeleteAsync(cancellationToken);
+        var ids = request.Ids ?? [];
+        var isUsedByCourse = await unitOfWork.Repository<Course>()
+            .AnyAsync(course => ids.Contains(course.SubjectId), cancellationToken);
+        if (isUsedByCourse)
+            throw SubjectConstraintErrors.InUse();
 
-        return new MultipleIdentiferResponse(request.Ids!);
+        try
+        {
+            await unitOfWork.Repository<Subject>()
+                .Find(subject => ids.Contains(subject.Id))
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.ForeignKeyViolation)
+        {
+            throw SubjectConstraintErrors.InUse(exception);
+        }
+
+        return new MultipleIdentiferResponse(ids);
     }
 }
