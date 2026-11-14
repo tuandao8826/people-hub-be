@@ -7,7 +7,8 @@ namespace Application.Modules.Training.Commands;
 public record ImportTrainingCommand(
     [Required, MinLength(1)] IReadOnlyList<ImportTrainingEmployee> Employees,
     [Required, MinLength(1)] IReadOnlyList<ImportTrainingSubject> Subjects,
-    [Required] IReadOnlyList<ImportTrainingEntry> Entries) : IRequest<ImportTrainingResult>;
+    [Required] IReadOnlyList<ImportTrainingEntry> Entries,
+    bool PreviewOnly = false) : IRequest<ImportTrainingResult>;
 
 public record ImportTrainingEmployee(
     [Required, StringLength(30)] string Code,
@@ -24,4 +25,10 @@ public record ImportTrainingEntry(
     [Required, StringLength(50)] string SubjectCode,
     DateOnly TrainingDate);
 
-public record ImportTrainingResult(int EmployeesCreated, int SubjectsCreated, int RecordsCreated, int RecordsSkipped);
+public record ImportTrainingResult(
+    int EmployeesCreated,
+    int SubjectsCreated,
+    int RecordsCreated,
+    int RecordsUpdated,
+    int RecordsUnchanged,
+    int RecordsSkipped);

@@ -24,3 +24,17 @@ public class MarkTrainingNotificationReadHandler(IUnitOfWork unitOfWork)
         return true;
     }
 }
+
+public record MarkAllTrainingNotificationsReadCommand : IRequest<int>;
+
+public class MarkAllTrainingNotificationsReadHandler(IUnitOfWork unitOfWork)
+    : IRequestHandler<MarkAllTrainingNotificationsReadCommand, int>
+{
+    public Task<int> Handle(
+        MarkAllTrainingNotificationsReadCommand request, CancellationToken cancellationToken)
+        => unitOfWork.Repository<TrainingNotification>()
+            .Find(notification => !notification.IsRead)
+            .ExecuteUpdateAsync(
+                updates => updates.SetProperty(notification => notification.IsRead, true),
+                cancellationToken);
+}

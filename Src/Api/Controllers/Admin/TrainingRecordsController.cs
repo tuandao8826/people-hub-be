@@ -41,6 +41,14 @@ public class TrainingRecordsController(IMediator mediator) : AdminBaseController
     public async Task<IActionResult> MarkNotificationReadAsync(Guid id, CancellationToken cancellationToken)
         => await mediator.Send(new MarkTrainingNotificationReadCommand(id), cancellationToken) ? NoContent() : NotFound();
 
+    [HttpPut("Notifications/ReadAll")]
+    [Authorize]
+    public async Task<IActionResult> MarkAllNotificationsReadAsync(CancellationToken cancellationToken)
+    {
+        await mediator.Send(new MarkAllTrainingNotificationsReadCommand(), cancellationToken);
+        return NoContent();
+    }
+
     [HttpGet]
     [Authorize]
     public async Task<ActionResult<SuccessResultResponse<PaginationResponse<TrainingEmployeeRowResponse>>>> SearchAsync(

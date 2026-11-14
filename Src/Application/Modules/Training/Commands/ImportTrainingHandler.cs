@@ -36,7 +36,6 @@ public class ImportTrainingHandler(IUnitOfWork unitOfWork) : IRequestHandler<Imp
         var staff = unitOfWork.Repository<StaffMember>();
         var subjects = unitOfWork.Repository<Subject>();
         var records = unitOfWork.Repository<TrainingRecord>();
-        await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
         var knownStaff = await staff.Find(item => employeeCodes.Contains(item.Code.ToUpper()))
             .AsNoTracking().ToDictionaryAsync(item => item.Code.ToUpperInvariant(), cancellationToken);
         var knownSubjects = await subjects.Find(item => subjectCodes.Contains(item.SubjectCode))
@@ -83,14 +82,15 @@ public class ImportTrainingHandler(IUnitOfWork unitOfWork) : IRequestHandler<Imp
         var staffIds = knownStaff.Values.Select(item => item.Id).ToArray();
         var subjectIds = knownSubjects.Values.Select(item => item.Id).ToArray();
         var existingRecords = await records.Find(item => staffIds.Contains(item.StaffMemberId) && subjectIds.Contains(item.SubjectId))
-            .Select(item => new { item.StaffMemberId, item.SubjectId }).ToListAsync(cancellationToken);
-        var existingPairs = existingRecords.Select(item => (item.StaffMemberId, item.SubjectId)).ToHashSet();
+            .ToListAsync(cancellationToken);
+        var existingByPair = existingRecords.ToDictionary(item => (item.StaffMemberId, item.SubjectId));
         var newRecords = new List<TrainingRecord>();
+        var recordsToUpdate = new List<TrainingRecord>();
+        var unchangedRecords = 0;
         foreach (var item in entries)
         {
             var staffId = knownStaff[item.StaffCode].Id;
             var subject = knownSubjects[item.SubjectCode];
-            if (existingPairs.Contains((staffId, subject.Id))) continue;
             var date = item.TrainingDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
             try
             {
@@ -100,13 +100,32 @@ public class ImportTrainingHandler(IUnitOfWork unitOfWork) : IRequestHandler<Imp
             {
                 throw new BadRequestException($"Ngày hết hạn vượt phạm vi cho {item.StaffCode} và {item.SubjectCode}.");
             }
-            newRecords.Add(new TrainingRecord { StaffMemberId = staffId, SubjectId = subject.Id, TrainingDate = date });
+            if (existingByPair.TryGetValue((staffId, subject.Id), out var existing))
+            {
+                if (existing.TrainingDate.UtcDateTime.Date == date.Date)
+                {
+                    unchangedRecords++;
+                    continue;
+                }
+                existing.TrainingDate = date;
+                recordsToUpdate.Add(existing);
+            }
+            else
+            {
+                newRecords.Add(new TrainingRecord { StaffMemberId = staffId, SubjectId = subject.Id, TrainingDate = date });
+            }
         }
 
+        var preview = new ImportTrainingResult(
+            newStaff.Count, newSubjects.Count, newRecords.Count, recordsToUpdate.Count, unchangedRecords, 0);
+        if (request.PreviewOnly) return preview;
+
+        await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
             if (newStaff.Count > 0) await staff.AddRangeAsync(newStaff, cancellationToken);
             if (newSubjects.Count > 0) await subjects.AddRangeAsync(newSubjects, cancellationToken);
+            if (recordsToUpdate.Count > 0) await records.UpdateRangeAsync(recordsToUpdate, cancellationToken);
             if (newRecords.Count > 0) await records.AddRangeAsync(newRecords, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
@@ -115,6 +134,6 @@ public class ImportTrainingHandler(IUnitOfWork unitOfWork) : IRequestHandler<Imp
             throw new BadRequestException("Dữ liệu đã thay đổi trong lúc nhập. Vui lòng thử lại.", HttpStatusCode.Conflict);
         }
 
-        return new ImportTrainingResult(newStaff.Count, newSubjects.Count, newRecords.Count, entries.Count - newRecords.Count);
+        return preview;
     }
 }
