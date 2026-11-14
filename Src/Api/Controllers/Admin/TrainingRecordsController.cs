@@ -1,5 +1,4 @@
 using Api.Common.ControllerWrappers;
-using Api.TrainingNotifications;
 using Application.Common.ApiWrapper;
 using Application.Common.Responses;
 using Application.Modules.Training.Commands;
@@ -10,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers.Admin;
 
-public class TrainingRecordsController(IMediator mediator, TrainingNotificationSnapshot notificationSnapshot) : AdminBaseController
+public class TrainingRecordsController(IMediator mediator) : AdminBaseController
 {
     [HttpPost("Import")]
     [Authorize]
@@ -18,20 +17,29 @@ public class TrainingRecordsController(IMediator mediator, TrainingNotificationS
         [FromBody] ImportTrainingCommand request, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(request, cancellationToken);
-        notificationSnapshot.Invalidate();
         return ResultResponse(result, "Đã nhập hồ sơ đào tạo.");
     }
 
     [HttpGet("Notifications")]
     [Authorize]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    public async Task<ActionResult<SuccessResultResponse<TrainingNotificationsResponse>>> NotificationsAsync(
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<SuccessResultResponse<TrainingNotificationsPageResponse>>> NotificationsAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 5,
+        CancellationToken cancellationToken = default)
     {
-        var notifications = notificationSnapshot.GetToday()
-            ?? await mediator.Send(new GetTrainingNotificationsQuery(), cancellationToken);
+        var notifications = await mediator.Send(new GetTrainingNotificationsQuery
+        {
+            Page = page,
+            PageSize = pageSize
+        }, cancellationToken);
         return ResultResponse(notifications, "Thông báo hạn đào tạo.");
     }
+
+    [HttpPut("Notifications/{id:guid}/Read")]
+    [Authorize]
+    public async Task<IActionResult> MarkNotificationReadAsync(Guid id, CancellationToken cancellationToken)
+        => await mediator.Send(new MarkTrainingNotificationReadCommand(id), cancellationToken) ? NoContent() : NotFound();
 
     [HttpGet]
     [Authorize]
@@ -48,7 +56,6 @@ public class TrainingRecordsController(IMediator mediator, TrainingNotificationS
         CancellationToken cancellationToken)
     {
         await mediator.Send(new SaveTrainingRecordCommand(staffMemberId, subjectId, request.TrainingDate), cancellationToken);
-        notificationSnapshot.Invalidate();
         return ResultResponse("Đã lưu hồ sơ đào tạo.");
     }
 }

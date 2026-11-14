@@ -16,7 +16,6 @@ internal static class Startup
         }
 
         services.AddSingleton(new TrainingNotificationSchedule(dailyRunAt));
-        services.AddSingleton<TrainingNotificationSnapshot>();
         services.AddHostedService<TrainingNotificationJob>();
         return services;
     }

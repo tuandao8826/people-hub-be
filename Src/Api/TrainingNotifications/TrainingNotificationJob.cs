@@ -1,4 +1,5 @@
 using Application.Modules.Training.Queries;
+using Application.Modules.Training.Commands;
 using MediatR;
 
 namespace Api.TrainingNotifications;
@@ -6,7 +7,6 @@ namespace Api.TrainingNotifications;
 internal sealed class TrainingNotificationJob(
     IServiceScopeFactory scopeFactory,
     TrainingNotificationSchedule schedule,
-    TrainingNotificationSnapshot snapshot,
     ILogger<TrainingNotificationJob> logger) : BackgroundService
 {
     private static readonly TimeSpan RetryDelay = TimeSpan.FromMinutes(1);
@@ -26,19 +26,15 @@ internal sealed class TrainingNotificationJob(
                 try
                 {
                     logger.LogInformation("[Thông báo đào tạo] Bắt đầu kiểm tra hạn đào tạo ngày {ScheduledDate:dd/MM/yyyy}.", scheduledDate);
-                    var version = snapshot.GetVersion();
                     await using var scope = scopeFactory.CreateAsyncScope();
                     var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-                    var notifications = await sender.Send(new GetTrainingNotificationsQuery(), stoppingToken);
-                    if (snapshot.TryPublish(scheduledDate, version, notifications))
-                    {
-                        logger.LogInformation(
-                            "[Thông báo đào tạo] Chạy thành công. {ExpiringSoon} nhân viên hết hạn trong 14 ngày tới, {ExpiresToday} nhân viên hết hạn hôm nay.",
-                            notifications.ExpiringSoon, notifications.ExpiresToday);
-                        break;
-                    }
-
-                    logger.LogInformation("[Thông báo đào tạo] Dữ liệu vừa thay đổi. Sẽ thử lại sau 1 phút.");
+                    var counts = await sender.Send(new GetTrainingNotificationCountsQuery(), stoppingToken);
+                    var created = await sender.Send(new GenerateTrainingNotificationsCommand(
+                        scheduledDate, counts.Expired, counts.ExpiringSoon), stoppingToken);
+                    logger.LogInformation(
+                        "[Thông báo đào tạo] Quét xong. Đã hết hạn: {Expired} nhân viên; sắp hết hạn trong 14 ngày: {ExpiringSoon} nhân viên; tạo mới {Created} thông báo.",
+                        counts.Expired, counts.ExpiringSoon, created);
+                    break;
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {

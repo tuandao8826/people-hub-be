@@ -1,5 +1,4 @@
 ﻿using Api.Common.ControllerWrappers;
-using Api.TrainingNotifications;
 using Application.Common.ApiWrapper;
 using Application.Common.Definitions.Messages;
 using Application.Common.Responses;
@@ -16,14 +15,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers.Admin.Subjects;
 
-public partial class SubjectsController(IMediator mediator, TrainingNotificationSnapshot notificationSnapshot) : AdminBaseController
+public partial class SubjectsController(IMediator mediator) : AdminBaseController
 {
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<SuccessResultResponse<Guid>>> CreateAsync([FromBody] CreateSubjectCommand request, CancellationToken cancellationToken = default)
     {
         var result = await mediator.Send(request, cancellationToken);
-        notificationSnapshot.Invalidate();
         return ResultResponse(result, Message<Subject>.Create());
     }
 
@@ -32,7 +30,6 @@ public partial class SubjectsController(IMediator mediator, TrainingNotification
     public async Task<ActionResult<SuccessResultResponse<Guid>>> UpdateAsync([FromRoute] Guid id, [FromBody] UpdateSubjectRequest request, CancellationToken cancellationToken = default)
     {
         var result = await mediator.Send(new UpdateSubjectCommand(id, request), cancellationToken);
-        notificationSnapshot.Invalidate();
         return ResultResponse(result, Message<Subject>.Update());
     }
 
@@ -41,7 +38,6 @@ public partial class SubjectsController(IMediator mediator, TrainingNotification
     public async Task<ActionResult<SuccessResultResponse<MultipleIdentiferResponse>>> DeleteRangeAsync([FromBody] DeleteSubjectCommand request, CancellationToken cancellationToken = default)
     {
         var result = await mediator.Send(request, cancellationToken);
-        notificationSnapshot.Invalidate();
         return ResultResponse(result, Message<Subject>.Delete());
     }
 

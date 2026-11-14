@@ -285,6 +285,38 @@ namespace Migrators.PostgreSql.Migrations
                     b.ToTable("training_record", (string)null);
                 });
 
+            modelBuilder.Entity("Application.Modules.Training.Entities.TrainingNotification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EmployeeCount")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateOnly>("ScanDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("ScanDate", "Type");
+
+                    b.ToTable("training_notification", (string)null);
+                });
+
             modelBuilder.Entity("Application.Modules.Users.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")

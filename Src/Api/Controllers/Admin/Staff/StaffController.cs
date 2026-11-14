@@ -1,5 +1,4 @@
 using Api.Common.ControllerWrappers;
-using Api.TrainingNotifications;
 using Application.Common.ApiWrapper;
 using Application.Common.Definitions.Messages;
 using Application.Common.Responses;
@@ -21,7 +20,7 @@ namespace Api.Controllers.Admin.Staff;
 
 [Route("api/v{version:apiVersion}/[controller]")]
 [Authorize]
-public class StaffController(IMediator mediator, TrainingNotificationSnapshot notificationSnapshot) : AdminBaseController
+public class StaffController(IMediator mediator) : AdminBaseController
 {
     [HttpGet]
     public async Task<ActionResult<SuccessResultResponse<PaginationResponse<StaffResponse>>>> ListAsync(
@@ -65,7 +64,6 @@ public class StaffController(IMediator mediator, TrainingNotificationSnapshot no
         if (!await mediator.Send(new DeleteStaffCommand(id), cancellationToken))
             return NotFound();
 
-        notificationSnapshot.Invalidate();
         return NoContent();
     }
 
