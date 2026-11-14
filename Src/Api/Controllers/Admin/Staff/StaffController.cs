@@ -1,4 +1,5 @@
 using Api.Common.ControllerWrappers;
+using Api.TrainingNotifications;
 using Application.Common.ApiWrapper;
 using Application.Common.Definitions.Messages;
 using Application.Common.Responses;
@@ -20,7 +21,7 @@ namespace Api.Controllers.Admin.Staff;
 
 [Route("api/v{version:apiVersion}/[controller]")]
 [Authorize]
-public class StaffController(IMediator mediator) : AdminBaseController
+public class StaffController(IMediator mediator, TrainingNotificationSnapshot notificationSnapshot) : AdminBaseController
 {
     [HttpGet]
     public async Task<ActionResult<SuccessResultResponse<PaginationResponse<StaffResponse>>>> ListAsync(
@@ -58,7 +59,13 @@ public class StaffController(IMediator mediator) : AdminBaseController
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
-        => await mediator.Send(new DeleteStaffCommand(id), cancellationToken) ? NoContent() : NotFound();
+    {
+        if (!await mediator.Send(new DeleteStaffCommand(id), cancellationToken))
+            return NotFound();
+
+        notificationSnapshot.Invalidate();
+        return NoContent();
+    }
 
     private async Task<ActionResult<SuccessResultResponse<StaffResponse>>> SaveAsync(
         IRequest<StaffResponse?> request, string message, CancellationToken cancellationToken)

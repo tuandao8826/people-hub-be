@@ -1,4 +1,5 @@
 using Api.Common.ControllerWrappers;
+using Api.TrainingNotifications;
 using Application.Common.ApiWrapper;
 using Application.Common.Responses;
 using Application.Modules.Training.Commands;
@@ -9,14 +10,16 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers.Admin;
 
-public class TrainingRecordsController(IMediator mediator) : AdminBaseController
+public class TrainingRecordsController(IMediator mediator, TrainingNotificationSnapshot notificationSnapshot) : AdminBaseController
 {
     [HttpPost("Import")]
     [Authorize]
     public async Task<ActionResult<SuccessResultResponse<ImportTrainingResult>>> ImportAsync(
         [FromBody] ImportTrainingCommand request, CancellationToken cancellationToken)
     {
-        return ResultResponse(await mediator.Send(request, cancellationToken), "Đã nhập hồ sơ đào tạo.");
+        var result = await mediator.Send(request, cancellationToken);
+        notificationSnapshot.Invalidate();
+        return ResultResponse(result, "Đã nhập hồ sơ đào tạo.");
     }
 
     [HttpGet("Notifications")]
@@ -25,7 +28,9 @@ public class TrainingRecordsController(IMediator mediator) : AdminBaseController
     public async Task<ActionResult<SuccessResultResponse<TrainingNotificationsResponse>>> NotificationsAsync(
         CancellationToken cancellationToken)
     {
-        return ResultResponse(await mediator.Send(new GetTrainingNotificationsQuery(), cancellationToken), "Thông báo hạn đào tạo.");
+        var notifications = notificationSnapshot.GetToday()
+            ?? await mediator.Send(new GetTrainingNotificationsQuery(), cancellationToken);
+        return ResultResponse(notifications, "Thông báo hạn đào tạo.");
     }
 
     [HttpGet]
@@ -43,6 +48,7 @@ public class TrainingRecordsController(IMediator mediator) : AdminBaseController
         CancellationToken cancellationToken)
     {
         await mediator.Send(new SaveTrainingRecordCommand(staffMemberId, subjectId, request.TrainingDate), cancellationToken);
+        notificationSnapshot.Invalidate();
         return ResultResponse("Đã lưu hồ sơ đào tạo.");
     }
 }

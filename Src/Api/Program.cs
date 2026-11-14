@@ -4,6 +4,7 @@ using Api.Common.Logging;
 using Api.Common.Swagger;
 using Api.Configurations;
 using Api.Middlewares;
+using Api.TrainingNotifications;
 using Application.Modules.SystemAccounts;
 using Microsoft.AspNetCore.Authorization;
 using Application;
@@ -38,6 +39,7 @@ try
 	#region Layers dependencies
 	builder.Services.AddInfrastructure(configuration);
 	builder.Services.AddApplication(configuration);
+	builder.Services.AddTrainingNotifications(configuration);
 	#endregion
 
 	builder.Services.AddCors(options =>
