@@ -11,6 +11,23 @@ namespace Api.Controllers.Admin;
 
 public class TrainingRecordsController(IMediator mediator) : AdminBaseController
 {
+    [HttpPost("Import")]
+    [Authorize]
+    public async Task<ActionResult<SuccessResultResponse<ImportTrainingResult>>> ImportAsync(
+        [FromBody] ImportTrainingCommand request, CancellationToken cancellationToken)
+    {
+        return ResultResponse(await mediator.Send(request, cancellationToken), "Đã nhập hồ sơ đào tạo.");
+    }
+
+    [HttpGet("Notifications")]
+    [Authorize]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<ActionResult<SuccessResultResponse<TrainingNotificationsResponse>>> NotificationsAsync(
+        CancellationToken cancellationToken)
+    {
+        return ResultResponse(await mediator.Send(new GetTrainingNotificationsQuery(), cancellationToken), "Thông báo hạn đào tạo.");
+    }
+
     [HttpGet]
     [Authorize]
     public async Task<ActionResult<SuccessResultResponse<PaginationResponse<TrainingEmployeeRowResponse>>>> SearchAsync(

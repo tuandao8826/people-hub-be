@@ -14,7 +14,8 @@ public enum TrainingRecordStatus
 {
     Valid = 1,
     Expired = 2,
-    ExpiringSoon = 3
+    ExpiringSoon = 3,
+    ExpiresToday = 4
 }
 
 public record TrainingEmployeeRowResponse(

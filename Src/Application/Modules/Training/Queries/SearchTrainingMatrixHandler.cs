@@ -29,29 +29,16 @@ public class SearchTrainingMatrixHandler(IUnitOfWork unitOfWork)
 
         if (request.OnlyExpired || request.TrainingStatus.HasValue)
         {
-            var today = new DateTimeOffset(DateTimeOffset.UtcNow.UtcDateTime.Date, TimeSpan.Zero);
-            var warningLimit = today.AddDays(15);
             var selectedStatus = request.OnlyExpired
                 ? TrainingRecordStatus.Expired
                 : request.TrainingStatus!.Value;
-            var expiredRecordsQuery = unitOfWork.Repository<TrainingRecord>().Find();
-            var subjectsQuery = unitOfWork.Repository<Subject>().Find();
-            var matchingStaffIds = from record in expiredRecordsQuery
-                                   join subject in subjectsQuery on record.SubjectId equals subject.Id
-                                   where (!request.SubjectId.HasValue || record.SubjectId == request.SubjectId.Value) &&
-                                         ((selectedStatus == TrainingRecordStatus.Expired &&
-                                           ((subject.SubjectCycleUnit == SubjectCycleUnit.Days && record.TrainingDate.AddDays(subject.CycleValue) < today) ||
-                                            (subject.SubjectCycleUnit == SubjectCycleUnit.Months && record.TrainingDate.AddMonths(subject.CycleValue) < today) ||
-                                            (subject.SubjectCycleUnit == SubjectCycleUnit.Years && record.TrainingDate.AddYears(subject.CycleValue) < today))) ||
-                                          (selectedStatus == TrainingRecordStatus.ExpiringSoon &&
-                                           ((subject.SubjectCycleUnit == SubjectCycleUnit.Days && record.TrainingDate.AddDays(subject.CycleValue) >= today && record.TrainingDate.AddDays(subject.CycleValue) < warningLimit) ||
-                                            (subject.SubjectCycleUnit == SubjectCycleUnit.Months && record.TrainingDate.AddMonths(subject.CycleValue) >= today && record.TrainingDate.AddMonths(subject.CycleValue) < warningLimit) ||
-                                            (subject.SubjectCycleUnit == SubjectCycleUnit.Years && record.TrainingDate.AddYears(subject.CycleValue) >= today && record.TrainingDate.AddYears(subject.CycleValue) < warningLimit))) ||
-                                          (selectedStatus == TrainingRecordStatus.Valid &&
-                                           ((subject.SubjectCycleUnit == SubjectCycleUnit.Days && record.TrainingDate.AddDays(subject.CycleValue) >= warningLimit) ||
-                                            (subject.SubjectCycleUnit == SubjectCycleUnit.Months && record.TrainingDate.AddMonths(subject.CycleValue) >= warningLimit) ||
-                                            (subject.SubjectCycleUnit == SubjectCycleUnit.Years && record.TrainingDate.AddYears(subject.CycleValue) >= warningLimit))))
-                                   select record.StaffMemberId;
+            var candidateRecords = unitOfWork.Repository<TrainingRecord>().Find();
+            if (request.SubjectId is Guid subjectId)
+                candidateRecords = candidateRecords.Where(record => record.SubjectId == subjectId);
+
+            var matchingStaffIds = TrainingExpiry.SelectExpirations(candidateRecords, unitOfWork.Repository<Subject>().Find())
+                .Filter(selectedStatus, TrainingExpiry.Today)
+                .Select(record => record.StaffMemberId);
             staffQuery = staffQuery.Where(member => matchingStaffIds.Contains(member.Id));
         }
 
@@ -79,18 +66,11 @@ public class SearchTrainingMatrixHandler(IUnitOfWork unitOfWork)
                 .Select(record => new EmployeeSubjectTrainingResponse(
                     record.SubjectId,
                     record.TrainingDate,
-                    AddCycle(record.TrainingDate, subjects[record.SubjectId])))
+                    TrainingExpiry.AddCycle(record.TrainingDate, subjects[record.SubjectId])))
                 .ToList())).ToList();
 
         return new PaginationResponse<TrainingEmployeeRowResponse>(rows,
             new PageInfo(page, pageSize, rows.Count, total));
     }
 
-    private static DateTimeOffset AddCycle(DateTimeOffset date, Subject subject) => subject.SubjectCycleUnit switch
-    {
-        SubjectCycleUnit.Days => date.AddDays(subject.CycleValue),
-        SubjectCycleUnit.Months => date.AddMonths(subject.CycleValue),
-        SubjectCycleUnit.Years => date.AddYears(subject.CycleValue),
-        _ => date
-    };
 }
