@@ -21,8 +21,9 @@ public class SystemAccountsController(IMediator mediator) : AdminBaseController
     public async Task<ActionResult<SuccessResultResponse<PaginationResponse<SystemAccountResponse>>>> ListAsync(
         [FromQuery, Range(1, int.MaxValue / 100)] int page = 1,
         [FromQuery, Range(1, 100)] int pageSize = 20,
+        [FromQuery] string? keyword = null,
         CancellationToken cancellationToken = default)
-        => ResultResponse(await mediator.Send(new SearchSystemAccountsQuery(page, pageSize), cancellationToken), "SystemAccount.List");
+        => ResultResponse(await mediator.Send(new SearchSystemAccountsQuery(page, pageSize, keyword), cancellationToken), "SystemAccount.List");
 
     [HttpPost]
     public Task<ActionResult<SuccessResultResponse<SystemAccountResponse>>> CreateAsync(

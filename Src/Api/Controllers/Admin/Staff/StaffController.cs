@@ -28,12 +28,14 @@ public class StaffController(IMediator mediator, TrainingNotificationSnapshot no
         [FromQuery, Range(1, int.MaxValue / 100)] int page = 1,
         [FromQuery, Range(1, 100)] int pageSize = 20,
         [FromQuery(Name = "Search.Keyword")] string? keyword = null,
+        [FromQuery] int? status = null,
         CancellationToken cancellationToken = default)
     {
         var request = new SearchStaffQuery
         {
             Page = page,
             PageSize = pageSize,
+            Status = status,
             Search = string.IsNullOrWhiteSpace(keyword)
                 ? null
                 : new PaginationParamSearch { Keyword = keyword }
