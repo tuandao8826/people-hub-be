@@ -38,23 +38,22 @@ public class ImportTrainingHandler(IUnitOfWork unitOfWork) : IRequestHandler<Imp
         var records = unitOfWork.Repository<TrainingRecord>();
         var knownStaff = await staff.Find(item => employeeCodes.Contains(item.Code.ToUpper()))
             .AsNoTracking().ToDictionaryAsync(item => item.Code.ToUpperInvariant(), cancellationToken);
-        var knownSubjects = await subjects.Find(item => subjectCodes.Contains(item.SubjectCode))
-            .AsNoTracking().ToDictionaryAsync(item => item.SubjectCode, cancellationToken);
+        var knownSubjects = await subjects.Find(item => subjectCodes.Contains(item.SubjectCode.ToUpper()))
+            .AsNoTracking().ToDictionaryAsync(item => item.SubjectCode.ToUpperInvariant(), cancellationToken);
 
         var newStaff = new List<StaffMember>();
         foreach (var item in request.Employees)
         {
             var code = item.Code.Trim().ToUpperInvariant();
-            var name = item.Name.Trim();
             if (knownStaff.TryGetValue(code, out var existing))
             {
-                if (!string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase))
-                    throw new BadRequestException($"Mã nhân viên {code} đã thuộc về hồ sơ khác.", HttpStatusCode.Conflict);
+                if (item.UsesTemporaryCode && !string.Equals(existing.Name.Trim(), item.Name.Trim(), StringComparison.OrdinalIgnoreCase))
+                    throw new BadRequestException($"Mã tạm {code} đã thuộc về nhân viên khác. Vui lòng điền Staff_Code cho dòng tương ứng.", HttpStatusCode.Conflict);
                 continue;
             }
             var member = new StaffMember
             {
-                Code = code, Name = name, Department = "Chưa cập nhật", JobTitle = "Chưa cập nhật"
+                Code = code, Name = item.Name.Trim(), Department = "Chưa cập nhật", JobTitle = "Chưa cập nhật"
             };
             knownStaff.Add(code, member);
             newStaff.Add(member);
@@ -64,16 +63,11 @@ public class ImportTrainingHandler(IUnitOfWork unitOfWork) : IRequestHandler<Imp
         foreach (var item in request.Subjects)
         {
             var code = item.Code.Trim().ToUpperInvariant();
-            var name = item.Name.Trim();
-            if (knownSubjects.TryGetValue(code, out var existing))
-            {
-                if (!string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase))
-                    throw new BadRequestException($"Mã môn học {code} đã thuộc về môn khác.", HttpStatusCode.Conflict);
+            if (knownSubjects.ContainsKey(code))
                 continue;
-            }
             var subject = new Subject
             {
-                SubjectCode = code, Name = name, CycleValue = item.CycleValue, SubjectCycleUnit = item.CycleUnit
+                SubjectCode = code, Name = item.Name.Trim(), CycleValue = item.CycleValue, SubjectCycleUnit = item.CycleUnit
             };
             knownSubjects.Add(code, subject);
             newSubjects.Add(subject);
@@ -82,7 +76,7 @@ public class ImportTrainingHandler(IUnitOfWork unitOfWork) : IRequestHandler<Imp
         var staffIds = knownStaff.Values.Select(item => item.Id).ToArray();
         var subjectIds = knownSubjects.Values.Select(item => item.Id).ToArray();
         var existingRecords = await records.Find(item => staffIds.Contains(item.StaffMemberId) && subjectIds.Contains(item.SubjectId))
-            .ToListAsync(cancellationToken);
+            .AsNoTracking().ToListAsync(cancellationToken);
         var existingByPair = existingRecords.ToDictionary(item => (item.StaffMemberId, item.SubjectId));
         var newRecords = new List<TrainingRecord>();
         var recordsToUpdate = new List<TrainingRecord>();
@@ -119,6 +113,8 @@ public class ImportTrainingHandler(IUnitOfWork unitOfWork) : IRequestHandler<Imp
         var preview = new ImportTrainingResult(
             newStaff.Count, newSubjects.Count, newRecords.Count, recordsToUpdate.Count, unchangedRecords, 0);
         if (request.PreviewOnly) return preview;
+        if (request.ExpectedResult is not null && request.ExpectedResult != preview)
+            throw new BadRequestException("Dữ liệu đã thay đổi kể từ lần xem trước. Vui lòng xem lại số liệu trước khi đồng bộ.", HttpStatusCode.Conflict);
 
         await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
         try

@@ -11,6 +11,15 @@ namespace Api.Controllers.Admin;
 
 public class TrainingRecordsController(IMediator mediator) : AdminBaseController
 {
+    [HttpPost("Import/Preview")]
+    [Authorize]
+    public async Task<ActionResult<SuccessResultResponse<ImportTrainingResult>>> PreviewImportAsync(
+        [FromBody] ImportTrainingCommand request, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(request with { PreviewOnly = true }, cancellationToken);
+        return ResultResponse(result, "Đã đối chiếu bảng đào tạo với dữ liệu hiện tại.");
+    }
+
     [HttpPost("Import")]
     [Authorize]
     public async Task<ActionResult<SuccessResultResponse<ImportTrainingResult>>> ImportAsync(

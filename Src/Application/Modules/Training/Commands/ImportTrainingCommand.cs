@@ -8,11 +8,13 @@ public record ImportTrainingCommand(
     [Required, MinLength(1)] IReadOnlyList<ImportTrainingEmployee> Employees,
     [Required, MinLength(1)] IReadOnlyList<ImportTrainingSubject> Subjects,
     [Required] IReadOnlyList<ImportTrainingEntry> Entries,
-    bool PreviewOnly = false) : IRequest<ImportTrainingResult>;
+    bool PreviewOnly = false,
+    ImportTrainingResult? ExpectedResult = null) : IRequest<ImportTrainingResult>;
 
 public record ImportTrainingEmployee(
     [Required, StringLength(30)] string Code,
-    [Required, StringLength(100)] string Name);
+    [Required, StringLength(100)] string Name,
+    bool UsesTemporaryCode = false);
 
 public record ImportTrainingSubject(
     [Required, StringLength(50)] string Code,
