@@ -7,10 +7,43 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers.Admin;
+namespace Api.Controllers.Admin.TrainingRecords;
 
 public class TrainingRecordsController(IMediator mediator) : AdminBaseController
 {
+    [HttpGet("Export")]
+    [Authorize]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> ExportAsync(CancellationToken cancellationToken)
+    {
+        var export = await mediator.Send(new ExportTrainingMatrixQuery(), cancellationToken);
+        return File(export.Content,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            export.FileName);
+    }
+
+    [HttpGet("Export/Expired")]
+    [Authorize]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> ExportExpiredAsync(
+        [FromQuery] Guid? subjectId, CancellationToken cancellationToken)
+    {
+        var export = await mediator.Send(new ExportExpiredTrainingQuery(subjectId), cancellationToken);
+        return File(export.Content,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            export.FileName);
+    }
+
+    [HttpGet("Statistics")]
+    [Authorize]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<ActionResult<SuccessResultResponse<TrainingMatrixStatisticsResponse>>> StatisticsAsync(
+        CancellationToken cancellationToken)
+    {
+        var statistics = await mediator.Send(new GetTrainingMatrixStatisticsQuery(), cancellationToken);
+        return ResultResponse(statistics, "Số liệu tổng quan đào tạo.");
+    }
+
     [HttpPost("Import/Preview")]
     [Authorize]
     public async Task<ActionResult<SuccessResultResponse<ImportTrainingResult>>> PreviewImportAsync(

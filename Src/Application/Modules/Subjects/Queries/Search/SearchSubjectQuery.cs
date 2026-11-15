@@ -4,4 +4,7 @@ using MediatR;
 
 namespace Application.Modules.Subjects.Queries.Search;
 
-public class SearchSubjectQuery : PaginationParams, IRequest<PaginationResponse<SubjectDefaultResponse>>;
+public class SearchSubjectQuery : PaginationParams, IRequest<PaginationResponse<SubjectDefaultResponse>>
+{
+    public int? Status { get; init; }
+}

@@ -17,6 +17,7 @@ public class SearchSubjectHandler(IUnitOfWork unitOfWork, IMapper mapper) : IReq
         return await unitOfWork.Repository<Subject>()
             .Find()
             .AsNoTracking()
+            .Where(subject => request.Status == null || (int)subject.OperationStatus == request.Status)
             .ProjectTo<SubjectDefaultResponse>(mapper.ConfigurationProvider)
             .ApplySearch(request)
             .ApplySort(request)
