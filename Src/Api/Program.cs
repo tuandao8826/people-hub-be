@@ -23,6 +23,7 @@ try
 		policy => policy.RequireAuthenticatedUser().AddRequirements(new ManageSystemAccountsRequirement())));
 	builder.Services.AddScoped<IAuthorizationHandler, SystemAccountAuthorization>();
 	builder.Services.AddBrowserSession(builder.Environment);
+	builder.Services.AddLoginRateLimiting();
 	builder.Services.AddEndpointsApiExplorer();
 
     #region ApiVersioning
@@ -63,6 +64,7 @@ try
 	#endregion
 
 	app.OpenSwagger();
+	app.UseRateLimiter();
     app.UseAuthentication();
 	app.UseMiddlewares();
 	app.UseAuthorization();

@@ -10,22 +10,24 @@ namespace Application.Common.Auths.Services;
 
 public interface IJwtTokenService
 {
-	string GenerateAccessToken(JwtSettings settings, IJwtUser user, params Claim[] claims);
+	string GenerateAccessToken(JwtSettings settings, IJwtUser user, LoginSession session);
 
 	string GenerateRefreshToken();
 }
 
 public class JwtTokenService : IJwtTokenService
 {
-	public string GenerateAccessToken(JwtSettings settings, IJwtUser user, params Claim[] claims)
+	public string GenerateAccessToken(JwtSettings settings, IJwtUser user, LoginSession session)
 	{
 		SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(settings.SecretKey));
 
 		JwtSecurityToken accessToken = new
 		(
 			signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256),
-			expires: DateTime.UtcNow.AddMinutes(settings.TokenValidityInMinutes),
-			claims: user.GetClaims().Concat(claims)
+			issuer: settings.ValidIssuer,
+			audience: settings.ValidAudience,
+			expires: session.ExpiresAt.UtcDateTime,
+			claims: user.GetClaims().Append(new Claim(JwtRegisteredClaimNames.Jti, session.Id.ToString()))
 		);
 
 		return new JwtSecurityTokenHandler().WriteToken(accessToken);

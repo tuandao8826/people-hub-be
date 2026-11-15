@@ -1,10 +1,16 @@
+using Api.Common.Auths;
 using Application.Common.Auths.Configurations;
 using Application.Common.Auths.Jwt;
+using Application.Common.Interfaces.Persistence;
 using Application.Modules.Users.Commands.Login;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.IdentityModel.Tokens.Jwt;
+using HeaderNames = Microsoft.Net.Http.Headers.HeaderNames;
 
 namespace Api.Controllers.Admin.Users;
 
@@ -20,6 +26,7 @@ public partial class UsersController
 
     [HttpPost("Session")]
     [AllowAnonymous]
+    [EnableRateLimiting(LoginRateLimiting.Policy)]
     public async Task<IActionResult> CreateSessionAsync(
         [FromBody] LoginUserCommand request,
         [FromServices] IAntiforgery antiforgery,
@@ -45,10 +52,22 @@ public partial class UsersController
 
     [HttpDelete("Session")]
     [AllowAnonymous]
-    public IActionResult DeleteSession(
+    public async Task<IActionResult> DeleteSessionAsync(
         [FromServices] IWebHostEnvironment environment,
-        [FromServices] IOptions<AntiforgeryOptions> antiforgeryOptions)
+        [FromServices] IOptions<AntiforgeryOptions> antiforgeryOptions,
+        [FromServices] IUnitOfWork unitOfWork,
+        CancellationToken cancellationToken)
     {
+        if (Request.Headers.ContainsKey(HeaderNames.Authorization) && Request.Cookies.ContainsKey(AdminSessionCookie.Name))
+            return BadRequest();
+
+        if (User.Identity?.IsAuthenticated == true &&
+            Guid.TryParse(User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value, out var sessionId))
+        {
+            await unitOfWork.Repository<LoginSession>().Find(session => session.Id == sessionId)
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
         Response.Cookies.Delete(AdminSessionCookie.Name, SessionCookieOptions(environment));
 
         var csrfCookie = antiforgeryOptions.Value.Cookie;

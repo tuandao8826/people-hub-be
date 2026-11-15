@@ -1,6 +1,7 @@
 ﻿using Application.Common.Auths.Configurations;
 using Application.Common.Auths.Jwt;
 using Application.Common.Auths.Services;
+using Application.Modules.Users.Commands.Login;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,6 +19,7 @@ internal static class Startup
 
 		services.AddScoped<IJwtTokenService, JwtTokenService>();
 		services.AddScoped<ICurrentUserService, CurrentUserService>();
+		services.AddSingleton<LoginAttemptLimiter>();
 
 		return services;
 	}
