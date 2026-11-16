@@ -25,6 +25,66 @@ namespace Migrators.PostgreSql.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Application.Modules.FlightSchedules.Entities.FlightSchedule", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid");
+                    b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone");
+                    b.Property<string>("AircraftType").HasMaxLength(30).HasColumnType("character varying(30)");
+                    b.Property<string>("ArrivalFlightNumber").HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<string>("ArrivalStand").HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<DateOnly?>("ArrivalFlightDate").HasColumnType("date");
+                    b.Property<string>("ArrivalRouteIcao").HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<string>("HandlingAgent").HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<string>("LandingRunway").HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<string>("TakeoffRunway").HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<string>("NatureOfFlight").HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<DateTimeOffset?>("EstimatedInBlockAt").HasColumnType("timestamp with time zone");
+                    b.Property<string>("EstimatedTaxiTime").HasMaxLength(30).HasColumnType("character varying(30)");
+                    b.Property<DateTimeOffset?>("TargetOffBlockAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("CalculatedTakeoffAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("TargetStartupApprovalAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ActualStartupApprovalAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ActualGroundHandlingAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ActualOffBlockAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ActualInBlockAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ActualRunwayDepartureAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ActualEngineStartAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ActualStartupAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("TargetTaxiTime").HasColumnType("timestamp with time zone");
+                    b.Property<string>("ArrivalGate").HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<string>("DepartureGate").HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<DateTimeOffset?>("EstimatedLandingAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ActualStartRequestAt").HasColumnType("timestamp with time zone");
+                    b.Property<string>("SourceRowIndex").HasMaxLength(30).HasColumnType("character varying(30)");
+                    b.Property<string>("ArrivalIcaoFlightNumber").HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<string>("DepartureIcaoFlightNumber").HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<DateTimeOffset?>("EstimatedDepartureAtSource").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("EstimatedArrivalAt").HasColumnType("timestamp with time zone");
+                    b.Property<string>("TargetOffBlockCount").HasMaxLength(30).HasColumnType("character varying(30)");
+                    b.Property<string>("TargetStartupApprovalCount").HasMaxLength(30).HasColumnType("character varying(30)");
+                    b.Property<DateOnly?>("DepartureFlightDate").HasColumnType("date");
+                    b.Property<string>("DepartureRouteIcao").HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<string>("Belt").HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<DateOnly>("FlightDate").HasColumnType("date");
+                    b.Property<string>("FlightNumber").IsRequired().HasMaxLength(40).HasColumnType("citext");
+                    b.Property<string>("FlightStatus").HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<string>("IcaoFlightNumber").HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<string>("DepartureFlightNumber").HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<string>("DepartureStand").HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<string>("RegistrationNumber").HasMaxLength(20).HasColumnType("citext");
+                    b.Property<string>("Route").IsRequired().HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<DateTimeOffset?>("ActualLandingAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ActualTakeoffAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("EstimatedDepartureAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ScheduledArrivalAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ScheduledDepartureAt").HasColumnType("timestamp with time zone");
+                    b.HasKey("Id");
+                    b.HasIndex("FlightDate");
+                    b.HasIndex("RegistrationNumber");
+                    b.HasIndex("FlightNumber", "FlightDate", "Route").IsUnique();
+                    b.ToTable("flight_schedule");
+                });
+
             modelBuilder.Entity("Application.Common.Auths.Jwt.LoginSession", b =>
                 {
                     b.Property<Guid>("Id")
