@@ -23,7 +23,7 @@ public class SearchFlightSchedulesHandler(IUnitOfWork unitOfWork) : IRequestHand
         var total = await query.CountAsync(cancellationToken);
         var page = Math.Max(1, request.Page);
         var size = Math.Clamp(request.PageSize, 1, 100);
-        var items = await query.OrderByDescending(x => x.FlightDate).ThenBy(x => x.ScheduledArrivalAt).ThenBy(x => x.FlightNumber)
+        var items = await query.OrderByDescending(x => x.ScheduledArrivalAt).ThenByDescending(x => x.FlightDate).ThenBy(x => x.FlightNumber)
             .Skip((page - 1) * size).Take(size)
             .Select(x => new FlightScheduleListItemResponse(x.Id, x.FlightNumber, x.ArrivalFlightNumber, x.DepartureFlightNumber,
                 x.FlightDate, x.ArrivalFlightDate, x.DepartureFlightDate, x.Route, x.RegistrationNumber, x.AircraftType,
