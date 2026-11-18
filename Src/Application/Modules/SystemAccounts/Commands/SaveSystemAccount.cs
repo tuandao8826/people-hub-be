@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Application.Common.Exceptions;
 using Application.Common.Extensions;
 using Application.Common.Interfaces.Persistence;
+using Application.Modules.Roles.Entities;
 using Application.Modules.SystemAccounts.Bases;
 using Application.Modules.Users.Entities;
 using MediatR;
@@ -26,7 +27,7 @@ public class SaveSystemAccountHandler(IUnitOfWork unitOfWork)
         User? account;
         if (request.Id is Guid id)
         {
-            account = await accounts.Find(user => user.Id == id && user.RoleId == SystemAccountAccess.AdministratorRoleId)
+            account = await accounts.Find(user => user.Id == id)
                 .SingleOrDefaultAsync(cancellationToken);
             if (account is null) return null;
         }
@@ -38,8 +39,17 @@ public class SaveSystemAccountHandler(IUnitOfWork unitOfWork)
             if (!Regex.IsMatch(username, @"^[A-Za-z0-9._-]{6,50}$"))
                 throw new BadRequestException("SystemAccount.InvalidUsername");
 
-            account = new User { Username = username, RoleId = SystemAccountAccess.AdministratorRoleId };
+            account = new User { Username = username };
         }
+
+        if (request.Data.RoleId is not Guid roleId || roleId == Guid.Empty)
+            throw new BadRequestException("SystemAccount.RoleRequired");
+        var role = await unitOfWork.Repository<Role>().Find(item => item.Id == roleId)
+            .AsNoTracking()
+            .Select(item => new { item.Id, item.Code, item.Name })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (role is null)
+            throw new BadRequestException("SystemAccount.InvalidRole");
 
         var email = request.Data.Email?.Trim();
         if (string.IsNullOrWhiteSpace(email))
@@ -55,6 +65,7 @@ public class SaveSystemAccountHandler(IUnitOfWork unitOfWork)
         account.Name = request.Data.Name.Trim();
         account.Email = email;
         account.Status = request.Data.Status;
+        account.RoleId = roleId;
         if (request.Data.Password is { } password)
         {
             if (Encoding.UTF8.GetByteCount(password) > 72 || string.IsNullOrWhiteSpace(password))
@@ -81,6 +92,13 @@ public class SaveSystemAccountHandler(IUnitOfWork unitOfWork)
             throw new BadRequestException("SystemAccount.UsernameExists", HttpStatusCode.Conflict);
         }
 
-        return new SystemAccountResponse(account.Id, account.Username, account.Name, account.Email, account.Status, false);
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException
+            { SqlState: PostgresErrorCodes.ForeignKeyViolation })
+        {
+            throw new BadRequestException("SystemAccount.InvalidRole", HttpStatusCode.BadRequest, exception);
+        }
+
+        return new SystemAccountResponse(account.Id, account.Username, account.Name, account.Email, account.Status,
+            false, role.Id, role.Code, role.Name);
     }
 }

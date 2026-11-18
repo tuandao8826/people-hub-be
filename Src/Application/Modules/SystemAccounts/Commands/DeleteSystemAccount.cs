@@ -16,7 +16,7 @@ public class DeleteSystemAccountHandler(IUnitOfWork unitOfWork, ICurrentUserServ
         SystemAccountAccess.EnsureCanDelete(currentUser.Id, [request.Id]);
 
         return await unitOfWork.Repository<User>()
-            .Find(user => user.Id == request.Id && user.RoleId == SystemAccountAccess.AdministratorRoleId)
+            .Find(user => user.Id == request.Id)
             .ExecuteDeleteAsync(cancellationToken) > 0;
     }
 }

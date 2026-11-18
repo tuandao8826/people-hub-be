@@ -3,7 +3,9 @@ using Core.Common.Enums;
 
 namespace Application.Modules.SystemAccounts.Bases;
 
-public record SystemAccountResponse(Guid Id, string Username, string Name, string? Email, OperationStatus Status, bool IsRootAdmin);
+public record SystemAccountResponse(
+    Guid Id, string Username, string Name, string? Email, OperationStatus Status, bool IsRootAdmin,
+    Guid? RoleId, string? RoleCode, string? RoleName);
 
 public class UpdateSystemAccountRequest
 {
@@ -18,6 +20,9 @@ public class UpdateSystemAccountRequest
 
     [EnumDataType(typeof(OperationStatus))]
     public OperationStatus Status { get; set; } = OperationStatus.Active;
+
+    [Required]
+    public Guid? RoleId { get; set; }
 }
 
 public class CreateSystemAccountRequest : UpdateSystemAccountRequest

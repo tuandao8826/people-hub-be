@@ -16,9 +16,7 @@ public class SearchSystemAccountsHandler(IUnitOfWork unitOfWork)
     public Task<PaginationResponse<SystemAccountResponse>> Handle(SearchSystemAccountsQuery request, CancellationToken cancellationToken)
     {
         var rootId = SystemAccountAccess.RootAdminId;
-        var roleId = SystemAccountAccess.AdministratorRoleId;
-        var query = unitOfWork.Repository<User>().Find(user => user.Id == rootId || user.RoleId == roleId)
-            .AsNoTracking();
+        var query = unitOfWork.Repository<User>().Find().AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Keyword))
         {
@@ -30,7 +28,9 @@ public class SearchSystemAccountsHandler(IUnitOfWork unitOfWork)
 
         return query.OrderByDescending(user => user.Id == rootId)
             .ThenBy(user => user.Username)
-            .Select(user => new SystemAccountResponse(user.Id, user.Username, user.Name, user.Email, user.Status, user.Id == rootId))
+            .Select(user => new SystemAccountResponse(
+                user.Id, user.Username, user.Name, user.Email, user.Status, user.Id == rootId,
+                user.RoleId, user.Role != null ? user.Role.Code : null, user.Role != null ? user.Role.Name : null))
             .ToPageListAsync(new PaginationParams { Page = request.Page, PageSize = request.PageSize }, cancellationToken);
     }
 }
